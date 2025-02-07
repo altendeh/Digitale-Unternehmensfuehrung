@@ -3,6 +3,6 @@ Link zur Miro Dokumentation: https://miro.com/welcomeonboard/czRqZDE2bk13RWlhRDV
 To-Do:
 1. Tabellenstruktur überlegen
 2. Auswahl Daten / Unternehmen
-3. Daten bereinigen
+3. Daten bereinigen/ Umrechnung Dollar in Euro
 5. KPIs berechen -> Funktion
 6. csv -> Visualisierung
