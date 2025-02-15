@@ -289,9 +289,12 @@ def update_dashboard():
 def update_line_chart():
     symbols = request.json.get('symbols', [])
     fig = create_line_chart(symbols)
-    fig_json = fig.to_json()
-    print("Line Chart JSON:", fig_json)  # Debugging-Ausgabe
-    return jsonify(fig_json)
+    if fig is None:
+        print("Fehler: Die Figur ist None")
+    else:
+        fig_json = fig.to_json()
+        print("Line Chart JSON:", fig_json)  # Debugging-Ausgabe
+        return jsonify(fig_json)
 
 @app.route('/check_ticker', methods=['POST'])
 def check_ticker():
