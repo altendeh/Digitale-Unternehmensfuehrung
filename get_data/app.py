@@ -264,6 +264,49 @@ def create_line_chart(ticker_symbols):
 
     return fig
 
+def create_additional_chart(symbols):
+    balance_sheets = {ticker: get_balance_sheet(ticker) for ticker in symbols}
+    fig = go.Figure()
+    kpis = [
+        'Eigenkapitalquote', 'Verschuldungsquote', '1. Liquiditätsquote', 'Netto-Umlaufvermögen'
+    ]
+    
+    # Farben für die KPIs festlegen
+    kpi_colors = {
+        'Eigenkapitalquote': 'blue',
+        'Verschuldungsquote': 'red',
+        '1. Liquiditätsquote': 'green',
+        'Netto-Umlaufvermögen': 'orange'
+    }
+
+    for ticker, balance_sheet in balance_sheets.items():
+        for kpi in kpis:
+            fig.add_trace(go.Bar(
+                x=[f'{ticker}'],
+                y=[balance_sheet.loc[kpi].values[0]],  # Nur den ersten Wert verwenden (2023)
+                name=f'{ticker} {kpi}',
+                marker_color=kpi_colors[kpi],
+                hovertext=[f"{balance_sheet.loc[kpi].values[0]:.2f}"],
+                hoverinfo='text',
+                showlegend=True
+            ))
+
+    # Layout des Diagramms anpassen
+    fig.update_layout(
+        barmode='group',
+        title='Wichtige KPIs der Unternehmen',
+        xaxis_title='Unternehmen',
+        yaxis_title='Wert',
+        legend_title='Kennzahlen',
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[f'{ticker}' for ticker in symbols],
+            ticktext=[f'{ticker}' for ticker in symbols]
+        )
+    )
+
+    return fig
+
 
 @app.route('/')
 def index():
@@ -305,10 +348,10 @@ def check_ticker():
 @app.route('/update_additional_chart', methods=['POST'])
 def update_additional_chart():
     symbols = request.json.get('symbols', [])
-    # Erstelle hier die zusätzlichen Diagramme und KPIs
     fig = create_additional_chart(symbols)
     fig_json = fig.to_json()
     print("Additional Chart JSON:", fig_json)  # Debugging
+    return jsonify(fig_json)
 
 if __name__ == '__main__':
     app.run(debug=True)
