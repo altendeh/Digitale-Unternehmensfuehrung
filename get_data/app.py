@@ -22,8 +22,8 @@ def create_company_table(symbols):
                     fill_color='paleturquoise',
                     align='left'),
         cells=dict(values=[namen, branchen, länder, mitarbeiter],
-                   fill_color='lavender',
-                   align='left'))
+                    fill_color='lavender',
+                    align='left'))
     
     ])
 
@@ -247,13 +247,13 @@ def create_line_chart(ticker_symbols):
                         'label': 'Eigenkapitalquote',
                         'method': 'update',
                         'args': [{'visible': [True if i < len(ticker_symbols) else False for i in range(2 * len(ticker_symbols))]},
-                                 {'title': 'Eigenkapitalquote'}]
+                                {'title': 'Eigenkapitalquote'}]
                     },
                     {
                         'label': 'Verschuldungsquote',
                         'method': 'update',
                         'args': [{'visible': [False if i < len(ticker_symbols) else True for i in range(2 * len(ticker_symbols))]},
-                                 {'title': 'Verschuldungsquote'}]
+                                {'title': 'Verschuldungsquote'}]
                     }
                 ],
                 'direction': 'down',
