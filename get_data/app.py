@@ -2,22 +2,46 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import yfinance as yf
 import plotly.graph_objects as go
-import random
 import pandas as pd
+from functools import lru_cache
 
 app = Flask(__name__)
 CORS(app)  # CORS für alle Routen aktivieren
 
+# Globale Konfiguration
+CONFIG = {
+    'COLORS': {
+        'Eigenkapital': '#1f77b4',  # Blau
+        'Langfristige Verbindlichkeiten': '#ff7f0e',  # Orange
+        'Kurzfristige Verbindlichkeiten': '#2ca02c',  # Grün
+        'TICKER_COLORS': ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    },
+    'DEFAULT_YEARS': ['2023', '2024']
+}
 
 def get_company_info(symbols):
     return {symbol: yf.Ticker(symbol).info for symbol in symbols}
 
 def create_company_table(symbols):
+    """
+    Erstellt eine Tabelle mit Unternehmensinformationen.
+
+    Args:
+        symbols (list): Liste der Ticker-Symbole.
+
+    Returns:
+        plotly.graph_objects.Figure: Die erstellte Tabelle.
+    """
     data = get_company_info(symbols)
     namen = [data[symbol].get('shortName', 'N/A') for symbol in data]
     branchen = [data[symbol].get('sector', 'N/A') for symbol in data]
     länder = [data[symbol].get('country', 'N/A') for symbol in data]
     mitarbeiter = [data[symbol].get('fullTimeEmployees', 'N/A') for symbol in data]
+
+    # Dynamische Höhe basierend auf der Anzahl der Zeilen
+    row_count = len(namen)
+    row_height = 50  # Höhe pro Zeile in Pixeln
+    table_height = row_count * row_height + 50  # Zusätzliche Höhe für Header und Puffer
 
     fig = go.Figure(data=[go.Table(
         header=dict(values=['Unternehmen', 'Branche', 'Land', 'Mitarbeiter'],
@@ -26,18 +50,26 @@ def create_company_table(symbols):
         cells=dict(values=[namen, branchen, länder, mitarbeiter],
                    fill_color='lavender',
                    align='left'))
-    
     ])
 
     # Layout-Eigenschaften anpassen
     fig.update_layout(
         autosize=True,
-        height=600,  # Höhe der Tabelle anpassen
-        margin=dict(l=20, r=20, t=20, b=20)  # Ränder anpassen
+        height=table_height,
+        margin=dict(l=20, r=20, t=20, b=20)
     )
     return fig
 
 def get_filtered_balance_sheet(ticker_symbol):
+    """
+    Holt und filtert die Bilanzdaten eines Unternehmens.
+
+    Args:
+        ticker_symbol (str): Das Ticker-Symbol.
+
+    Returns:
+        pd.DataFrame: Gefilterte Bilanzdaten.
+    """
     indices = [
         'Total Non Current Assets', 'Current Assets', 'Inventory', 'Receivables',
         'Cash Cash Equivalents And Short Term Investments', 'Stockholders Equity',
@@ -57,19 +89,43 @@ def get_filtered_balance_sheet(ticker_symbol):
     return filtered_balance_sheet
 
 def get_usd_to_eur_exchange_rate():
+    """
+    Holt den aktuellen USD/EUR-Wechselkurs.
+
+    Returns:
+        float: Der Wechselkurs.
+    """
     ticker = yf.Ticker("USDEUR=X")
     exchange_rate = ticker.history(period="1d")['Close'].iloc[-1]
     return exchange_rate
 
 def convert_dataframe_to_euro(df):
+    """
+    Konvertiert einen DataFrame von USD in EUR.
+
+    Args:
+        df (pd.DataFrame): Der zu konvertierende DataFrame.
+
+    Returns:
+        pd.DataFrame: Der konvertierte DataFrame.
+    """
     exchange_rate = get_usd_to_eur_exchange_rate()
     df_euro = df.applymap(lambda value: value * exchange_rate)
     return df_euro
 
 def calculate_kpis(df):
-    df.loc['Equity_Ratio'] = df.loc['Stockholders Equity'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])
-    df.loc['Debt_Ratio'] = df.loc['Total Liabilities Net Minority Interest'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])
-    df.loc['Static_Debt_Ratio'] = df.loc['Total Liabilities Net Minority Interest'] / df.loc['Stockholders Equity']
+    """
+    Berechnet wichtige Kennzahlen (KPIs) basierend auf Bilanzdaten.
+
+    Args:
+        df (pd.DataFrame): Der DataFrame mit Bilanzdaten.
+
+    Returns:
+        pd.DataFrame: Der DataFrame mit berechneten KPIs.
+    """
+    df.loc['Equity_Ratio'] = (df.loc['Stockholders Equity'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])) * 100
+    df.loc['Debt_Ratio'] = (df.loc['Total Liabilities Net Minority Interest'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])) * 100
+    df.loc['Static_Debt_Ratio'] = (df.loc['Total Liabilities Net Minority Interest'] / df.loc['Stockholders Equity']) * 100
     df.loc['Fixed_Asset_Intensity'] = df.loc['Total Non Current Assets'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
     df.loc['Coverage_Ratio_1'] = df.loc['Stockholders Equity'] / df.loc['Total Non Current Assets']
     df.loc['Coverage_Ratio_2'] = (df.loc['Stockholders Equity'] + df.loc['Total Non Current Liabilities Net Minority Interest']) / df.loc['Total Non Current Assets']
@@ -82,6 +138,15 @@ def calculate_kpis(df):
     return df
 
 def translate_indices(df):
+    """
+    Übersetzt die Indizes eines DataFrames ins Deutsche.
+
+    Args:
+        df (pd.DataFrame): Der zu übersetzende DataFrame.
+
+    Returns:
+        pd.DataFrame: Der übersetzte DataFrame.
+    """
     translations = {
         'Total Non Current Assets': 'Gesamtanlagevermögen',
         'Current Assets': 'Umlaufvermögen',
@@ -106,38 +171,35 @@ def translate_indices(df):
     df.rename(index=translations, inplace=True)
     return df
 
-def clean_and_interpolate(df):
+def clean_and_skip_nan(df):
     """
-    Bereinigt den DataFrame, indem NaN-Werte behandelt und interpoliert werden.
-    - Setzt NaN-Werte in der ersten und letzten Spalte auf 0.
-    - Führt eine lineare Interpolation entlang der Zeilen durch.
+    Bereinigt den DataFrame, indem NaN-Werte beibehalten werden, sodass sie in Diagrammen übersprungen werden.
 
     Args:
         df (pd.DataFrame): Der zu bereinigende DataFrame.
 
     Returns:
-        pd.DataFrame: Der bereinigte und interpolierte DataFrame.
+        pd.DataFrame: Der bereinigte DataFrame mit beibehaltenen NaN-Werten.
     """
-    # Konvertiere alle Werte in numerische Datentypen
     df = df.apply(pd.to_numeric, errors='coerce')
-
-    # Setze NaN-Werte in der ersten und letzten Spalte auf 0
-    if not df.empty:
-        df.iloc[:, 0] = df.iloc[:, 0].fillna(0)  # Erste Spalte
-        df.iloc[:, -1] = df.iloc[:, -1].fillna(0)  # Letzte Spalte
-
-    # Interpolation von NaN-Werten reihenweise (entlang der Zeilen)
-    df = df.interpolate(method='linear', axis=0)
-
     return df
 
+@lru_cache(maxsize=128)
 def get_balance_sheet(ticker_symbol):
+    """
+    Holt die Bilanzdaten für ein Ticker-Symbol und bereitet sie auf.
+
+    Args:
+        ticker_symbol (str): Das Ticker-Symbol.
+
+    Returns:
+        pd.DataFrame: Die aufbereiteten Bilanzdaten.
+    """
     balance_sheet = get_filtered_balance_sheet(ticker_symbol)
-    balance_sheet = clean_and_interpolate(balance_sheet)
+    balance_sheet = clean_and_skip_nan(balance_sheet)
     balance_sheet_euro = convert_dataframe_to_euro(balance_sheet)
     balance_sheet_kpi = calculate_kpis(balance_sheet_euro)
-    balance_sheet_kpi_clean = clean_and_interpolate(balance_sheet_kpi)
-    balance_sheet_german = translate_indices(balance_sheet_kpi_clean)
+    balance_sheet_german = translate_indices(balance_sheet_kpi)
     return balance_sheet_german
 
 def is_valid_ticker(ticker_symbol):
@@ -163,6 +225,13 @@ def create_structural_balance_sheet_table(ticker_symbols):
         if not years:
             print(f"Keine Bilanzdaten für 2023 oder 2024 für {ticker} gefunden.")
             continue
+
+        # Überschrift für den Ticker hinzufügen
+        html_tables += f"""
+        <div class="ticker-title" style="font-size: 24px; font-weight: bold; margin-top: 30px; color: black;">
+            Strukturbilanz für {ticker}
+        </div>
+        """
 
         for year in sorted(years, reverse=True):
             # Werte extrahieren
@@ -383,21 +452,28 @@ def create_line_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    # Feste Farben für die Unternehmen
-    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    # Farben aus der globalen Konfiguration
+    TICKER_COLORS = CONFIG['COLORS']['TICKER_COLORS']
     company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
+    # Sammle alle Jahre aus den Balance Sheets
+    all_years = set()
     for ticker in ticker_symbols:
         balance_sheets[ticker] = get_balance_sheet(ticker)
+        all_years.update(balance_sheets[ticker].columns)
+
+    # Sortiere die Jahre numerisch
+    sorted_years = sorted(all_years, key=lambda x: int(x))
+
 
     # Eigenkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
-        x_values = balance_sheet.columns
-        y_values = balance_sheet.loc['Eigenkapitalquote', x_values]
+        x_values = sorted_years
+        y_values = [balance_sheet.loc['Eigenkapitalquote', year] if year in balance_sheet.columns else None for year in x_values]
 
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values.tolist(),
+            x=x_values,
+            y=y_values,
             mode='lines+markers',
             name=f'{ticker} Eigenkapitalquote',
             line=dict(color=company_colors[ticker]),
@@ -406,12 +482,12 @@ def create_line_chart(ticker_symbols):
 
     # Fremdkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
-        x_values = balance_sheet.columns
-        y_values = balance_sheet.loc['Fremdkapitalquote', x_values]
+        x_values = sorted_years
+        y_values = [balance_sheet.loc['Fremdkapitalquote', year] if year in balance_sheet.columns else None for year in x_values]
 
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values.tolist(),
+            x=x_values,
+            y=y_values,
             mode='lines+markers',
             name=f'{ticker} Fremdkapitalquote',
             line=dict(color=company_colors[ticker]),
@@ -420,12 +496,12 @@ def create_line_chart(ticker_symbols):
 
     # Statischer Verschuldungsgrad
     for ticker, balance_sheet in balance_sheets.items():
-        x_values = balance_sheet.columns
-        y_values = balance_sheet.loc['Statischer Verschuldungsgrad', x_values]
+        x_values = sorted_years
+        y_values = [balance_sheet.loc['Fremdkapitalquote', year] if year in balance_sheet.columns else None for year in x_values]
 
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values.tolist(),
+            x=x_values,
+            y=y_values,
             mode='lines+markers',
             name=f'{ticker} Statischer Verschuldungsgrad',
             line=dict(color=company_colors[ticker]),
@@ -469,30 +545,37 @@ def create_coverage_ratios_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    # Farben aus der globalen Konfiguration
+    TICKER_COLORS = CONFIG['COLORS']['TICKER_COLORS']
     company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
+    # Sammle alle Jahre aus den Balance Sheets
+    all_years = set()
     for ticker in ticker_symbols:
         balance_sheets[ticker] = get_balance_sheet(ticker)
+        all_years.update(balance_sheets[ticker].columns)
+
+    # Sortiere die Jahre numerisch
+    sorted_years = sorted(all_years, key=lambda x: int(x))
 
     for ticker, balance_sheet in balance_sheets.items():
-        x_values = balance_sheet.columns
+        x_values = sorted_years
+        y_values_coverage_1 = [balance_sheet.loc['Anlagendeckungsgrad 1', year] if year in balance_sheet.columns else None for year in x_values]
+        y_values_coverage_2 = [balance_sheet.loc['Anlagendeckungsgrad 2', year] if year in balance_sheet.columns else None for year in x_values]
 
         # 1. Anlagendeckung
-        y_values_coverage_1 = balance_sheet.loc['Anlagendeckungsgrad 1', x_values]
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values_coverage_1.tolist(),
+            x=x_values,
+            y=y_values_coverage_1,
             mode='lines+markers',
             name=f'{ticker} Anlagendeckungsgrad 1',
             line=dict(color=company_colors[ticker])
         ))
 
         # 2. Anlagendeckung
-        y_values_coverage_2 = balance_sheet.loc['Anlagendeckungsgrad 2', x_values]
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values_coverage_2.tolist(),
+            x=x_values,
+            y=y_values_coverage_2,
             mode='lines+markers',
             name=f'{ticker} Anlagendeckungsgrad 2',
             line=dict(color=company_colors[ticker], dash='dash')
@@ -511,40 +594,47 @@ def create_liquidity_ratios_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    # Farben aus der globalen Konfiguration
+    TICKER_COLORS = CONFIG['COLORS']['TICKER_COLORS']
     company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
+    # Sammle alle Jahre aus den Balance Sheets
+    all_years = set()
     for ticker in ticker_symbols:
         balance_sheets[ticker] = get_balance_sheet(ticker)
+        all_years.update(balance_sheets[ticker].columns)
+
+    # Sortiere die Jahre numerisch
+    sorted_years = sorted(all_years, key=lambda x: int(x))
 
     for ticker, balance_sheet in balance_sheets.items():
-        x_values = balance_sheet.columns
+        x_values = sorted_years
+        y_values_liquidity_1 = [balance_sheet.loc['1. Liquiditätsquote', year] if year in balance_sheet.columns else None for year in x_values]
+        y_values_liquidity_2 = [balance_sheet.loc['2. Liquiditätsquote', year] if year in balance_sheet.columns else None for year in x_values]
+        y_values_liquidity_3 = [balance_sheet.loc['3. Liquiditätsquote', year] if year in balance_sheet.columns else None for year in x_values]
 
         # 1. Liquiditätsgrad
-        y_values_liquidity_1 = balance_sheet.loc['1. Liquiditätsquote', x_values]
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values_liquidity_1.tolist(),
+            x=x_values,
+            y=y_values_liquidity_1,
             mode='lines+markers',
             name=f'{ticker} 1. Liquiditätsgrad',
             line=dict(color=company_colors[ticker])
         ))
 
         # 2. Liquiditätsgrad
-        y_values_liquidity_2 = balance_sheet.loc['2. Liquiditätsquote', x_values]
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values_liquidity_2.tolist(),
+            x=x_values,
+            y=y_values_liquidity_2,
             mode='lines+markers',
             name=f'{ticker} 2. Liquiditätsgrad',
             line=dict(color=company_colors[ticker], dash='dash')
         ))
 
         # 3. Liquiditätsgrad
-        y_values_liquidity_3 = balance_sheet.loc['3. Liquiditätsquote', x_values]
         fig.add_trace(go.Scatter(
-            x=x_values.tolist(),
-            y=y_values_liquidity_3.tolist(),
+            x=x_values,
+            y=y_values_liquidity_3,
             mode='lines+markers',
             name=f'{ticker} 3. Liquiditätsgrad',
             line=dict(color=company_colors[ticker], dash='dot')
@@ -597,10 +687,14 @@ def index():
 @app.route('/update_table', methods=['POST'])
 def update_table():
     symbols = request.json.get('symbols', [])
-    fig = create_company_table(symbols)
-    fig_json = fig.to_json()
-    print("Table JSON:", fig_json)  # Debugging-Ausgabe
-    return jsonify(fig_json)
+    if not symbols:
+        return jsonify({"error": "Bitte geben Sie mindestens ein Ticker-Symbol ein."}), 400
+    try:
+        fig = create_company_table(symbols)
+        return jsonify(fig.to_json())
+    except Exception as e:
+        print(f"Fehler beim Erstellen der Tabelle: {e}")
+        return jsonify({"error": "Fehler beim Erstellen der Tabelle"}), 500
 
 @app.route('/update_structural_balance_sheet', methods=['POST'])
 def update_structural_balance_sheet():
