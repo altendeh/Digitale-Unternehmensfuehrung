@@ -8,6 +8,8 @@ from functools import lru_cache
 app = Flask(__name__)
 CORS(app)  # CORS für alle Routen aktivieren
 
+
+
 # Globale Konfiguration
 CONFIG = {
     'COLORS': {
@@ -758,6 +760,14 @@ def check_ticker():
     ticker = request.json.get('ticker', '')
     is_valid = is_valid_ticker(ticker)
     return jsonify({'is_valid': is_valid})
+
+@app.route('/validate_ticker/<ticker>', methods=['GET'])
+def validate_ticker(ticker):
+    try:
+        ticker_info = yf.Ticker(ticker).info
+        return jsonify({"isValid": bool(ticker_info)})
+    except Exception:
+        return jsonify({"isValid": False})
 
 
 
