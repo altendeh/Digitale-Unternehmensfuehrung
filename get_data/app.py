@@ -3,6 +3,7 @@ from flask_cors import CORS
 import yfinance as yf
 import plotly.graph_objects as go
 import random
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)  # CORS für alle Routen aktivieren
@@ -44,8 +45,14 @@ def get_filtered_balance_sheet(ticker_symbol):
     ]
     ticker = yf.Ticker(ticker_symbol)
     balance_sheet = ticker.balancesheet
+
+    # Filtere nur die relevanten Indizes
     filtered_balance_sheet = balance_sheet.loc[indices]
+
+    # Konvertiere die Spaltennamen in Jahreszahlen und sortiere sie
     filtered_balance_sheet.columns = filtered_balance_sheet.columns.astype(str).str[:4]
+    filtered_balance_sheet = filtered_balance_sheet.sort_index(axis=1, ascending=True)
+
     return filtered_balance_sheet
 
 def get_usd_to_eur_exchange_rate():
@@ -63,9 +70,13 @@ def calculate_kpis(df):
     df.loc['Debt_Ratio'] = df.loc['Total Liabilities Net Minority Interest'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])
     df.loc['Static_Debt_Ratio'] = df.loc['Total Liabilities Net Minority Interest'] / df.loc['Stockholders Equity']
     df.loc['Fixed_Asset_Intensity'] = df.loc['Total Non Current Assets'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
+    df.loc['Coverage_Ratio_1'] = df.loc['Stockholders Equity'] / df.loc['Total Non Current Assets']
+    df.loc['Coverage_Ratio_2'] = (df.loc['Stockholders Equity'] + df.loc['Total Non Current Liabilities Net Minority Interest']) / df.loc['Total Non Current Assets']
     df.loc['Current_Asset_Ratio'] = df.loc['Current Assets'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
     df.loc['Receivables_Ratio'] = df.loc['Receivables'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
     df.loc['1. Liquidity_Ratio'] = df.loc['Current Assets'] / df.loc['Current Liabilities']
+    df.loc['2. Liquidity_Ratio'] = (df.loc['Current Assets'] - df.loc['Inventory']) / df.loc['Current Liabilities']
+    df.loc['3. Liquidity_Ratio'] = df.loc['Cash Cash Equivalents And Short Term Investments'] / df.loc['Current Liabilities']
     df.loc['Net_Working_Capital'] = df.loc['Current Assets'] - df.loc['Current Liabilities']
     return df
 
@@ -79,28 +90,134 @@ def translate_indices(df):
         'Current Liabilities': 'Kurzfristige Verbindlichkeiten',
         'Total Non Current Liabilities Net Minority Interest': 'Langfristige Verbindlichkeiten',
         'Equity_Ratio': 'Eigenkapitalquote',
-        'Debt_Ratio': 'Verschuldungsquote',
+        'Debt_Ratio': 'Fremdkapitalquote',
         'Static_Debt_Ratio': 'Statischer Verschuldungsgrad',
         'Fixed_Asset_Intensity': 'Anlageintensität',
+        'Coverage_Ratio_1': 'Anlagendeckungsgrad 1',
+        'Coverage_Ratio_2': 'Anlagendeckungsgrad 2',
         'Current_Asset_Ratio': 'Umlaufquote',
         'Receivables_Ratio': 'Forderungsquote',
         '1. Liquidity_Ratio': '1. Liquiditätsquote',
+        '2. Liquidity_Ratio': '2. Liquiditätsquote',
+        '3. Liquidity_Ratio': '3. Liquiditätsquote',
         'Net_Working_Capital': 'Netto-Umlaufvermögen'
     }
     df.rename(index=translations, inplace=True)
     return df
 
+def clean_and_interpolate(df):
+    """
+    Bereinigt den DataFrame, indem NaN-Werte behandelt und interpoliert werden.
+    - Setzt NaN-Werte in der ersten und letzten Spalte auf 0.
+    - Führt eine lineare Interpolation entlang der Zeilen durch.
+
+    Args:
+        df (pd.DataFrame): Der zu bereinigende DataFrame.
+
+    Returns:
+        pd.DataFrame: Der bereinigte und interpolierte DataFrame.
+    """
+    # Konvertiere alle Werte in numerische Datentypen
+    df = df.apply(pd.to_numeric, errors='coerce')
+
+    # Setze NaN-Werte in der ersten und letzten Spalte auf 0
+    if not df.empty:
+        df.iloc[:, 0] = df.iloc[:, 0].fillna(0)  # Erste Spalte
+        df.iloc[:, -1] = df.iloc[:, -1].fillna(0)  # Letzte Spalte
+
+    # Interpolation von NaN-Werten reihenweise (entlang der Zeilen)
+    df = df.interpolate(method='linear', axis=0)
+
+    return df
+
 def get_balance_sheet(ticker_symbol):
     balance_sheet = get_filtered_balance_sheet(ticker_symbol)
+    balance_sheet = clean_and_interpolate(balance_sheet)
     balance_sheet_euro = convert_dataframe_to_euro(balance_sheet)
     balance_sheet_kpi = calculate_kpis(balance_sheet_euro)
-    balance_sheet_german = translate_indices(balance_sheet_kpi)
+    balance_sheet_kpi_clean = clean_and_interpolate(balance_sheet_kpi)
+    balance_sheet_german = translate_indices(balance_sheet_kpi_clean)
     return balance_sheet_german
 
 def is_valid_ticker(ticker_symbol):
     ticker = yf.Ticker(ticker_symbol)
     balance_sheet = ticker.balancesheet
     return not balance_sheet.empty
+
+def create_structural_balance_sheet_table(ticker_symbols):
+    """
+    Erstellt eine Strukturbilanz-Tabelle für die angegebenen Ticker-Symbole.
+
+    Args:
+        ticker_symbols (list): Liste der Ticker-Symbole.
+
+    Returns:
+        plotly.graph_objects.Figure: Die erstellte Tabelle als Plotly-Figur.
+    """
+    from plotly.graph_objects import Table, Figure
+
+    # Farben für die Tabelle
+    header_color = '#2b3e50'
+    cell_color = '#1e1e1e'
+    text_color = 'white'
+
+    # Daten für die Tabelle sammeln
+    rows = []
+    for ticker in ticker_symbols:
+        balance_sheet = get_balance_sheet(ticker)
+        years = [col for col in balance_sheet.columns if col in ['2023', '2024']]
+        if not years:
+            print(f"Keine Bilanzdaten für 2023 oder 2024 für {ticker} gefunden.")
+            continue
+
+        for year in sorted(years, reverse=True):
+            anlage = balance_sheet.loc['Gesamtanlagevermögen', year]
+            umlauf = balance_sheet.loc['Umlaufvermögen', year]
+            summe_aktiva = anlage + umlauf
+
+            ek = balance_sheet.loc['Eigenkapital', year]
+            fk_lang = balance_sheet.loc['Langfristige Verbindlichkeiten', year]
+            fk_kurz = balance_sheet.loc['Kurzfristige Verbindlichkeiten', year]
+            summe_passiva = ek + fk_lang + fk_kurz
+
+            rows.append([
+                f"{ticker} ({year})",  # Ticker und Jahr
+                f"{anlage:,.0f} €",    # Anlagevermögen
+                f"{umlauf:,.0f} €",    # Umlaufvermögen
+                f"{summe_aktiva:,.0f} €",  # Summe Aktiva
+                f"{ek:,.0f} €",        # Eigenkapital
+                f"{fk_lang:,.0f} €",   # Langfristige Verbindlichkeiten
+                f"{fk_kurz:,.0f} €",   # Kurzfristige Verbindlichkeiten
+                f"{summe_passiva:,.0f} €"  # Summe Passiva
+            ])
+
+    # Tabelle erstellen
+    fig = Figure(data=[Table(
+        header=dict(
+            values=[
+                "Unternehmen (Jahr)", "Anlagevermögen", "Umlaufvermögen", "Summe Aktiva",
+                "Eigenkapital", "Langfristige Verbindlichkeiten", "Kurzfristige Verbindlichkeiten", "Summe Passiva"
+            ],
+            fill_color=header_color,
+            font=dict(color=text_color, size=12),
+            align='center'
+        ),
+        cells=dict(
+            values=list(zip(*rows)),  # Transponiere die Zeilen in Spalten
+            fill_color=cell_color,
+            font=dict(color=text_color, size=11),
+            align='center'
+        )
+    )])
+
+    # Layout anpassen
+    fig.update_layout(
+        title="Strukturbilanz der Unternehmen",
+        margin=dict(l=20, r=20, t=40, b=20),
+        height=400 + len(rows) * 30  # Dynamische Höhe basierend auf der Anzahl der Zeilen
+    )
+
+    return fig
 
 def create_dashboard(symbols):
     balance_sheets = {ticker: get_balance_sheet(ticker) for ticker in symbols}
@@ -212,48 +329,108 @@ def create_line_chart(ticker_symbols):
 
     # Hinzufügen der Liniendiagramm-Daten für die Eigenkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
-        # Spalten umsortieren
-        balance_sheet = balance_sheet.sort_index(axis=1, ascending=True)
+        # Debugging-Ausgabe für Eigenkapitalquote
+        print(f"Ticker: {ticker}, Eigenkapitalquote (vorher): {balance_sheet.loc['Eigenkapitalquote'].values}")
+
+        x_values = balance_sheet.columns
+        y_values = balance_sheet.loc['Eigenkapitalquote', x_values]
+
+        # Debugging-Ausgabe für x_values und y_values
+        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
+        print(f"Ticker: {ticker}, y-Werte (Eigenkapitalquote): {y_values.values}")
+
         fig.add_trace(go.Scatter(
-            x=balance_sheet.columns,
-            y=balance_sheet.loc['Eigenkapitalquote'],
+            x=x_values.tolist(),
+            y=y_values.tolist(),
             mode='lines+markers',
             name=f'{ticker} Eigenkapitalquote',
             line=dict(color=company_colors[ticker]),
             visible=True
         ))
 
-    # Hinzufügen der Liniendiagramm-Daten für die Verschuldungsquote
+    # Hinzufügen der Liniendiagramm-Daten für die Fremdkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
+        # Debugging-Ausgabe für Fremdkapitalquote
+        print(f"Ticker: {ticker}, Fremdkapitalquote (vorher): {balance_sheet.loc['Fremdkapitalquote'].values}")
+
+        x_values = balance_sheet.columns
+        y_values = balance_sheet.loc['Fremdkapitalquote', x_values]
+
+        # Debugging-Ausgabe für x_values und y_values
+        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
+        print(f"Ticker: {ticker}, y-Werte (Fremdkapitalquote): {y_values.values}")
+
         fig.add_trace(go.Scatter(
-            x=balance_sheet.columns,
-            y=balance_sheet.loc['Verschuldungsquote'],
+            x=x_values.tolist(),
+            y=y_values.tolist(),
             mode='lines+markers',
-            name=f'{ticker} Verschuldungsquote',
+            name=f'{ticker} Fremdkapitalquote',
             line=dict(color=company_colors[ticker]),
             visible=False
         ))
 
+    # Hinzufügen der Liniendiagramm-Daten für den statischen Verschuldungsgrad
+    for ticker, balance_sheet in balance_sheets.items():
+        # Debugging-Ausgabe für Statischer Verschuldungsgrad
+        print(f"Ticker: {ticker}, Statischer Verschuldungsgrad (vorher): {balance_sheet.loc['Statischer Verschuldungsgrad'].values}")
+
+        x_values = balance_sheet.columns
+        y_values = balance_sheet.loc['Statischer Verschuldungsgrad', x_values]
+
+        # Debugging-Ausgabe für x_values und y_values
+        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
+        print(f"Ticker: {ticker}, y-Werte (Statischer Verschuldungsgrad): {y_values.values}")
+
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} Statischer Verschuldungsgrad',
+            line=dict(color=company_colors[ticker]),
+            visible=False,
+            connectgaps=True  # Lücken ignorieren und verbinden
+        ))
     # Layout anpassen für das interaktive Diagramm
     fig.update_layout(
-        title='Eigenkapitalquote und Verschuldungsquote',
+        title='Eigenkapitalquote, Fremdkapitalquote und Statischer Verschuldungsgrad',
         xaxis_title='Jahr',
         yaxis_title='Quote',
         legend_title='Unternehmen',
+        legend=dict(
+            x=1,
+            y=1,
+            xanchor='left',
+            yanchor='top',
+            bgcolor='rgba(255, 255, 255, 0.5)',
+            bordercolor='black',
+            borderwidth=1
+        ),
         updatemenus=[
             {
                 'buttons': [
                     {
                         'label': 'Eigenkapitalquote',
                         'method': 'update',
-                        'args': [{'visible': [True if i < len(ticker_symbols) else False for i in range(2 * len(ticker_symbols))]},
-                                 {'title': 'Eigenkapitalquote'}]
+                        'args': [
+                            {'visible': [True if i < len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
+                            {'title': 'Eigenkapitalquote'}
+                        ]
+                    },
+                    {
+                        'label': 'Fremdkapitalquote',
+                        'method': 'update',
+                        'args': [
+                            {'visible': [True if len(ticker_symbols) <= i < 2 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
+                            {'title': 'Fremdkapitalquote'}
+                        ]
                     },
                     {
                         'label': 'Verschuldungsquote',
                         'method': 'update',
-                        'args': [{'visible': [False if i < len(ticker_symbols) else True for i in range(2 * len(ticker_symbols))]},
-                                 {'title': 'Verschuldungsquote'}]
+                        'args': [
+                            {'visible': [True if 2 * len(ticker_symbols) <= i < 3 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
+                            {'title': 'Verschuldungsquote'}
+                        ]
                     }
                 ],
                 'direction': 'down',
@@ -264,6 +441,152 @@ def create_line_chart(ticker_symbols):
 
     return fig
 
+def create_coverage_ratios_chart(ticker_symbols):
+    balance_sheets = {}
+    fig = go.Figure()
+
+    # Farben für die Unternehmen festlegen
+    company_colors = {ticker: generate_random_color() for ticker in ticker_symbols}
+
+    for ticker in ticker_symbols:
+        balance_sheets[ticker] = get_balance_sheet(ticker)
+
+    # Hinzufügen der Liniendiagramm-Daten für die 1. und 2. Anlagendeckung
+    for ticker, balance_sheet in balance_sheets.items():
+        x_values = balance_sheet.columns
+
+        # 1. Anlagendeckung
+        y_values_coverage_1 = balance_sheet.loc['Anlagendeckungsgrad 1', x_values]
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values_coverage_1.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} Anlagendeckungsgrad 1',
+            line=dict(color=company_colors[ticker])
+        ))
+
+        # 2. Anlagendeckung
+        y_values_coverage_2 = balance_sheet.loc['Anlagendeckungsgrad 2', x_values]
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values_coverage_2.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} Anlagendeckungsgrad 2',
+            line=dict(color=company_colors[ticker], dash='dash')  # Gepunktete Linie für 2. Anlagendeckung
+        ))
+
+    # Layout anpassen
+    fig.update_layout(
+        title='1. und 2. Anlagendeckung im Zeitverlauf',
+        xaxis_title='Jahr',
+        yaxis_title='Anlagendeckungsgrad',
+        legend_title='Unternehmen',
+        legend=dict(
+            x=1,
+            y=1,
+            xanchor='left',
+            yanchor='top',
+            bgcolor='rgba(255, 255, 255, 0.5)',
+            bordercolor='black',
+            borderwidth=1
+        )
+    )
+
+    return fig
+
+def create_liquidity_ratios_chart(ticker_symbols):
+    balance_sheets = {}
+    fig = go.Figure()
+
+    # Farben für die Unternehmen festlegen
+    company_colors = {ticker: generate_random_color() for ticker in ticker_symbols}
+
+    for ticker in ticker_symbols:
+        balance_sheets[ticker] = get_balance_sheet(ticker)
+
+    # Hinzufügen der Liniendiagramm-Daten für die 1., 2. und 3. Liquiditätsgrade
+    for ticker, balance_sheet in balance_sheets.items():
+        x_values = balance_sheet.columns
+
+        # 1. Liquiditätsgrad
+        y_values_liquidity_1 = balance_sheet.loc['1. Liquiditätsquote', x_values]
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values_liquidity_1.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} 1. Liquiditätsgrad',
+            line=dict(color=company_colors[ticker])
+        ))
+
+        # 2. Liquiditätsgrad
+        y_values_liquidity_2 = balance_sheet.loc['2. Liquiditätsquote', x_values]
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values_liquidity_2.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} 2. Liquiditätsgrad',
+            line=dict(color=company_colors[ticker], dash='dash')  # Gepunktete Linie für 2. Liquiditätsgrad
+        ))
+
+        # 3. Liquiditätsgrad
+        y_values_liquidity_3 = balance_sheet.loc['3. Liquiditätsquote', x_values]
+        fig.add_trace(go.Scatter(
+            x=x_values.tolist(),
+            y=y_values_liquidity_3.tolist(),
+            mode='lines+markers',
+            name=f'{ticker} 3. Liquiditätsgrad',
+            line=dict(color=company_colors[ticker], dash='dot')  # Gepunktete Linie für 3. Liquiditätsgrad
+        ))
+
+    # Layout anpassen
+    fig.update_layout(
+        title='1., 2. und 3. Liquiditätsgrade im Zeitverlauf',
+        xaxis_title='Jahr',
+        yaxis_title='Liquiditätsgrad',
+        legend_title='Unternehmen',
+        legend=dict(
+            x=1,
+            y=1,
+            xanchor='left',
+            yanchor='top',
+            bgcolor='rgba(255, 255, 255, 0.5)',
+            bordercolor='black',
+            borderwidth=1
+        )
+    )
+
+    return fig
+
+    
+
+def create_company_table(symbols):
+    data = get_company_info(symbols)
+    namen = [data[symbol].get('shortName', 'N/A') for symbol in data]
+    branchen = [data[symbol].get('sector', 'N/A') for symbol in data]
+    länder = [data[symbol].get('country', 'N/A') for symbol in data]
+    mitarbeiter = [data[symbol].get('fullTimeEmployees', 'N/A') for symbol in data]
+
+    # Anzahl der Zeilen berechnen
+    row_count = len(namen)
+    row_height = 50  # Höhe pro Zeile in Pixeln
+    table_height = row_count * row_height + 50  # Zusätzliche Höhe für Header und Puffer
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=['Unternehmen', 'Branche', 'Land', 'Mitarbeiter'],
+                    fill_color='paleturquoise',
+                    align='left'),
+        cells=dict(values=[namen, branchen, länder, mitarbeiter],
+                   fill_color='lavender',
+                   align='left'))
+    ])
+
+    # Layout-Eigenschaften anpassen
+    fig.update_layout(
+        autosize=True,
+        height=table_height,  # Dynamische Höhe basierend auf der Anzahl der Zeilen
+        margin=dict(l=20, r=20, t=20, b=20)  # Ränder anpassen
+    )
+    return fig
 
 @app.route('/')
 def index():
@@ -277,6 +600,15 @@ def update_table():
     print("Table JSON:", fig_json)  # Debugging-Ausgabe
     return jsonify(fig_json)
 
+@app.route('/update_structural_balance_sheet', methods=['POST'])
+def update_structural_balance_sheet():
+    symbols = request.json.get('symbols', [])
+    if not symbols:
+        return jsonify({"error": "Keine Symbole angegeben"}), 400
+
+    fig = create_structural_balance_sheet_table(symbols)
+    return jsonify(fig.to_json())
+
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():
     symbols = request.json.get('symbols', [])
@@ -288,13 +620,42 @@ def update_dashboard():
 @app.route('/update_line_chart', methods=['POST'])
 def update_line_chart():
     symbols = request.json.get('symbols', [])
+    print("Erhaltene Symbole:", symbols)  # Debugging-Ausgabe
+
+    if not symbols:
+        print("Fehler: Keine Symbole erhalten.")
+        return jsonify({"error": "Keine Symbole angegeben"}), 400
+
     fig = create_line_chart(symbols)
     if fig is None:
-        print("Fehler: Die Figur ist None")
-    else:
+        print("Fehler: Die Funktion create_line_chart hat keine Figur zurückgegeben.")
+        return jsonify({"error": "Fehler beim Erstellen des Diagramms"}), 500
+
+    try:
         fig_json = fig.to_json()
-        print("Line Chart JSON:", fig_json)  # Debugging-Ausgabe
+        print("Line Chart JSON erfolgreich erstellt.")  # Debugging-Ausgabe
         return jsonify(fig_json)
+    except Exception as e:
+        print("Fehler bei der JSON-Konvertierung:", e)
+        return jsonify({"error": "Fehler bei der JSON-Konvertierung"}), 500
+
+@app.route('/update_coverage_ratios_chart', methods=['POST'])
+def update_coverage_ratios_chart():
+    symbols = request.json.get('symbols', [])
+    if not symbols:
+        return jsonify({"error": "Keine Symbole angegeben"}), 400
+
+    fig = create_coverage_ratios_chart(symbols)
+    return jsonify(fig.to_json())
+
+@app.route('/update_liquidity_ratios_chart', methods=['POST'])
+def update_liquidity_ratios_chart():
+    symbols = request.json.get('symbols', [])
+    if not symbols:
+        return jsonify({"error": "Keine Symbole angegeben"}), 400
+
+    fig = create_liquidity_ratios_chart(symbols)
+    return jsonify(fig.to_json())
 
 @app.route('/check_ticker', methods=['POST'])
 def check_ticker():
@@ -302,13 +663,7 @@ def check_ticker():
     is_valid = is_valid_ticker(ticker)
     return jsonify({'is_valid': is_valid})
 
-@app.route('/update_additional_chart', methods=['POST'])
-def update_additional_chart():
-    symbols = request.json.get('symbols', [])
-    # Erstelle hier die zusätzlichen Diagramme und KPIs
-    fig = create_additional_chart(symbols)
-    fig_json = fig.to_json()
-    print("Additional Chart JSON:", fig_json)  # Debugging
+
 
 if __name__ == '__main__':
     app.run(debug=True)

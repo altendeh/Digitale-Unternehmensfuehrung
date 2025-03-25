@@ -5,49 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unternehmensvergleich</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
             display: flex;
-            flex-direction: column;
             height: 100vh;
+            background-color: #f9f9f9;
+        }
+        .hidden {
+            display: none;
         }
         .container {
             display: flex;
-            flex: 1;
             width: 100vw;
         }
         .left-column {
+            min-width: 200px;
+            max-width: 300px;
             flex: 1;
             display: flex;
             flex-direction: column;
             padding: 10px;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto;
+            background-color: #2c3e50;
+            color: #ecf0f1;
         }
-        .right-column {
-            flex: 2;
+        .main-column {
+            flex: 3;
             display: flex;
             flex-direction: column;
             padding: 10px;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto;
+        }
+        .right-column {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background-color: #ecf0f1;
         }
         .input-group {
             display: flex;
             margin-bottom: 10px;
+            width: 300px;
         }
         .input-group input {
-            flex: 1;
-            padding: 10px;
-            font-size: 16px;
+            flex: 2;
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
         }
         .input-group button {
-            padding: 10px;
-            font-size: 16px;
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: #fff;
+            cursor: pointer;
+        }
+        .input-group button:hover {
+            background-color: #2980b9;
         }
         .ticker-list {
             list-style-type: none;
@@ -66,47 +92,113 @@
             color: red;
             cursor: pointer;
         }
-        #table-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
+        .nav-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
         }
-        #line-chart-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
+        .nav-list li {
+            margin-bottom: 10px;
         }
-        #dashboard-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
+        .nav-list a {
+            text-decoration: none;
+            color: #ecf0f1;
+            cursor: pointer;
+        }
+        .nav-list a:hover {
+            text-decoration: underline;
         }
         .error-message {
             color: red;
             margin-top: 10px;
+        }
+        .ticker-container {
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .description {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="left-column">
+            <h1>Navigation</h1>
+            <ul class="nav-list">
+                <li><a href="#table-title">Unternehmensinformationen</a></li>
+                <li><a href="#structural-balance-sheet-title">Strukturbilanz</a></li>
+                <li><a href="#dashboard-title">Kapital und Verbindlichkeiten</a></li>
+                <li><a href="#line-chart-title">KPIs im Zeitverlauf</a></li>
+                <li><a href="#coverage-ratios-title">Anlagendeckungsgrade</a></li>
+                <li><a href="#liquidity-ratios-title">Liquiditätsgrade</a></li>
+            </ul>
+        </div>
+        <div class="main-column">
             <h1>Unternehmensvergleich</h1>
+            <div class="description">
+                <h2>Willkommen auf der Unternehmensvergleichs-Webseite!</h2>
+                <p>Hier können Sie den Cashflow und verschiedene KPIs (Key Performance Indicators) von Unternehmen vergleichen. Folgen Sie diesen Schritten, um Ihr Dashboard zu erstellen:</p>
+                <ol>
+                    <li>Geben Sie das Tickersymbol eines Unternehmens in das Eingabefeld ein und klicken Sie auf "Hinzufügen".</li>
+                    <li>Wiederholen Sie diesen Vorgang für alle Unternehmen, die Sie vergleichen möchten.</li>
+                    <li>Klicken Sie auf "Dashboard erstellen", um die Diagramme zu generieren.</li>
+                    <li>Nutzen Sie die Navigation auf der linken Seite, um zwischen den verschiedenen Diagrammen zu wechseln.</li>
+                </ol>
+            </div>
             <div class="input-group">
                 <input type="text" id="ticker-input" placeholder="Ticker eingeben">
                 <button onclick="addTicker()">Hinzufügen</button>
             </div>
-            <ul id="ticker-list" class="ticker-list"></ul>
-            <button onclick="createDashboard()">Dashboard erstellen</button>
-            <div id="table-container"></div>
+            <button onclick="createDashboard()" style="width: 300px;">Dashboard erstellen</button>
             <div id="error-message" class="error-message"></div>
+        
+            <!-- Tabelle -->
+            <h2 id="table-title" class="hidden">Unternehmensinformationen</h2>
+            <div id="table-container"></div>
+            <p id="table-description" class="hidden">Die Tabelle zeigt die grundlegenden Unternehmensinformationen wie Umsatz, Gewinn und andere finanzielle Kennzahlen.</p>
+        
+            <!-- Strukturbilanz -->
+            <h2 id="structural-balance-sheet-title" class="hidden">Strukturbilanz</h2>
+            <div id="structural-balance-sheet-container"></div>
+            <p id="structural-balance-sheet-description" class="hidden">
+                Diese Tabelle zeigt die Strukturbilanz der ausgewählten Unternehmen für die Jahre 2023 und 2024.
+            </p>
+
+            <!-- Dashboard -->
+            <h2 id="dashboard-title" class="hidden">Kapital und Verbindlichkeiten</h2>
+            <div id="dashboard-container"></div>
+            <p id="dashboard-description" class="hidden">Das Dashboard visualisiert das Verhältnis von Kapital und Verbindlichkeiten der ausgewählten Unternehmen.</p>
+        
+            <!-- Liniendiagramm -->
+            <h2 id="line-chart-title" class="hidden">KPIs im Zeitverlauf</h2>
+            <div id="line-chart-container"></div>
+            <p id="line-chart-description" class="hidden">Das Liniendiagramm zeigt die Entwicklung der wichtigsten KPIs (Key Performance Indicators) im Zeitverlauf.</p>
+        
+            <!-- Anlagendeckungsgrade -->
+            <h2 id="coverage-ratios-title" class="hidden">1. und 2. Anlagendeckung</h2>
+            <div id="coverage-ratios-container"></div>
+            <p id="coverage-ratios-description" class="hidden">Dieses Diagramm zeigt die 1. und 2. Anlagendeckung der ausgewählten Unternehmen im Zeitverlauf.</p>
+
+            <!-- Liquiditätsgrade -->
+            <h2 id="liquidity-ratios-title" class="hidden">1., 2. und 3. Liquiditätsgrade</h2>
+            <div id="liquidity-ratios-container"></div>
+            <p id="liquidity-ratios-description" class="hidden">Dieses Diagramm zeigt die 1., 2. und 3. Liquiditätsgrade der ausgewählten Unternehmen im Zeitverlauf.</p>
+        
         </div>
         <div class="right-column">
-            <div id="dashboard-container"></div>
-            <div id="line-chart-container"></div>
+            <h2>Ausgewählte Ticker</h2>
+            <ul id="ticker-list" class="ticker-list"></ul>
         </div>
     </div>
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
     <script>
         let tickers = [];
 
@@ -158,7 +250,8 @@
         async function createDashboard() {
             const tableContainer = document.getElementById('table-container');
             tableContainer.innerHTML = '';
-
+            
+            // Tabelle erstellen
             const response = await fetch('/update_table', {
                 method: 'POST',
                 headers: {
@@ -170,8 +263,25 @@
             console.log("Table JSON:", fig);  // Debugging-Ausgabe
             const figData = JSON.parse(fig);
             Plotly.newPlot('table-container', figData.data, figData.layout, {responsive: true});
+            document.getElementById('table-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('table-description').classList.remove('hidden'); // Beschreibung anzeigen
+        
+            // Strukturbilanz-Tabelle erstellen
+            const structuralBalanceSheetResponse = await fetch('/update_structural_balance_sheet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const structuralBalanceSheetFig = await structuralBalanceSheetResponse.json();
+            console.log("Structural Balance Sheet JSON:", structuralBalanceSheetFig);  // Debugging-Ausgabe
+            const structuralBalanceSheetFigData = JSON.parse(structuralBalanceSheetFig);
+            Plotly.newPlot('structural-balance-sheet-container', structuralBalanceSheetFigData.data, structuralBalanceSheetFigData.layout, {responsive: true});
+            document.getElementById('structural-balance-sheet-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('structural-balance-sheet-description').classList.remove('hidden'); // Beschreibung anzeigen
 
-            // Update Dashboard
+            // Dashboard erstellen
             const dashboardResponse = await fetch('/update_dashboard', {
                 method: 'POST',
                 headers: {
@@ -183,8 +293,10 @@
             console.log("Dashboard JSON:", dashboardFig);  // Debugging-Ausgabe
             const dashboardFigData = JSON.parse(dashboardFig);
             Plotly.newPlot('dashboard-container', dashboardFigData.data, dashboardFigData.layout, {responsive: true});
-
-            // Update Line Chart
+            document.getElementById('dashboard-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('dashboard-description').classList.remove('hidden'); // Beschreibung anzeigen
+        
+            // Liniendiagramm erstellen
             const lineChartResponse = await fetch('/update_line_chart', {
                 method: 'POST',
                 headers: {
@@ -196,6 +308,38 @@
             console.log("Line Chart JSON:", lineChartFig);  // Debugging-Ausgabe
             const lineChartFigData = JSON.parse(lineChartFig);
             Plotly.newPlot('line-chart-container', lineChartFigData.data, lineChartFigData.layout, {responsive: true});
+            document.getElementById('line-chart-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('line-chart-description').classList.remove('hidden'); // Beschreibung anzeigen
+
+            // Anlagendeckungsgrade erstellen
+            const coverageRatiosResponse = await fetch('/update_coverage_ratios_chart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const coverageRatiosFig = await coverageRatiosResponse.json();
+            console.log("Coverage Ratios JSON:", coverageRatiosFig);  // Debugging-Ausgabe
+            const coverageRatiosFigData = JSON.parse(coverageRatiosFig);
+            Plotly.newPlot('coverage-ratios-container', coverageRatiosFigData.data, coverageRatiosFigData.layout, {responsive: true});
+            document.getElementById('coverage-ratios-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('coverage-ratios-description').classList.remove('hidden'); // Beschreibung anzeigen
+
+            // Liquiditätsgrade erstellen
+            const liquidityRatiosResponse = await fetch('/update_liquidity_ratios_chart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const liquidityRatiosFig = await liquidityRatiosResponse.json();
+            console.log("Liquidity Ratios JSON:", liquidityRatiosFig);  // Debugging-Ausgabe
+            const liquidityRatiosFigData = JSON.parse(liquidityRatiosFig);
+            Plotly.newPlot('liquidity-ratios-container', liquidityRatiosFigData.data, liquidityRatiosFigData.layout, {responsive: true});
+            document.getElementById('liquidity-ratios-title').classList.remove('hidden'); // Überschrift anzeigen
+            document.getElementById('liquidity-ratios-description').classList.remove('hidden'); // Beschreibung anzeigen
         }
     </script>
 </body>
