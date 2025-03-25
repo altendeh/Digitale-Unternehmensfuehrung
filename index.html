@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unternehmensvergleich</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            width: 100vw;
+        }
+        .left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .right-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .input-group button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .ticker-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+        }
+        .ticker-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .ticker-list button {
+            background: none;
+            border: none;
+            color: red;
+            cursor: pointer;
+        }
+        #table-container {
+            flex: 1;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        #line-chart-container {
+            flex: 1;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        #dashboard-container {
+            flex: 1;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-column">
+            <h1>Unternehmensvergleich</h1>
+            <div class="input-group">
+                <input type="text" id="ticker-input" placeholder="Ticker eingeben">
+                <button onclick="addTicker()">Hinzufügen</button>
+            </div>
+            <ul id="ticker-list" class="ticker-list"></ul>
+            <button onclick="createDashboard()">Dashboard erstellen</button>
+            <div id="table-container"></div>
+            <div id="error-message" class="error-message"></div>
+        </div>
+        <div class="right-column">
+            <div id="dashboard-container"></div>
+            <div id="line-chart-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        let tickers = [];
+
+        async function addTicker() {
+            const input = document.getElementById('ticker-input');
+            const ticker = input.value.trim().toUpperCase();
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = '';
+
+            if (ticker && !tickers.includes(ticker)) {
+                const isValid = await checkTickerValidity(ticker);
+                if (isValid) {
+                    tickers.push(ticker);
+                    updateTickerList();
+                    input.value = '';
+                } else {
+                    errorMessage.textContent = 'Ungültiges Tickersymbol. Bitte versuchen Sie es erneut.';
+                }
+            }
+        }
+
+        async function checkTickerValidity(ticker) {
+            const response = await fetch('/check_ticker', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ticker })
+            });
+            const data = await response.json();
+            return data.is_valid;
+        }
+
+        function removeTicker(ticker) {
+            tickers = tickers.filter(t => t !== ticker);
+            updateTickerList();
+        }
+
+        function updateTickerList() {
+            const list = document.getElementById('ticker-list');
+            list.innerHTML = '';
+            tickers.forEach(ticker => {
+                const li = document.createElement('li');
+                li.innerHTML = `${ticker} <button onclick="removeTicker('${ticker}')">Löschen</button>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function createDashboard() {
+            const tableContainer = document.getElementById('table-container');
+            tableContainer.innerHTML = '';
+
+            const response = await fetch('/update_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const fig = await response.json();
+            console.log("Table JSON:", fig);  // Debugging-Ausgabe
+            const figData = JSON.parse(fig);
+            Plotly.newPlot('table-container', figData.data, figData.layout, {responsive: true});
+
+            // Update Dashboard
+            const dashboardResponse = await fetch('/update_dashboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const dashboardFig = await dashboardResponse.json();
+            console.log("Dashboard JSON:", dashboardFig);  // Debugging-Ausgabe
+            const dashboardFigData = JSON.parse(dashboardFig);
+            Plotly.newPlot('dashboard-container', dashboardFigData.data, dashboardFigData.layout, {responsive: true});
+
+            // Update Line Chart
+            const lineChartResponse = await fetch('/update_line_chart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ symbols: tickers })
+            });
+            const lineChartFig = await lineChartResponse.json();
+            console.log("Line Chart JSON:", lineChartFig);  // Debugging-Ausgabe
+            const lineChartFigData = JSON.parse(lineChartFig);
+            Plotly.newPlot('line-chart-container', lineChartFigData.data, lineChartFigData.layout, {responsive: true});
+        }
+    </script>
+</body>
+</html>
