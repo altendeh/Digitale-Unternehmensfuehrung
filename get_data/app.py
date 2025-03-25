@@ -8,6 +8,7 @@ import pandas as pd
 app = Flask(__name__)
 CORS(app)  # CORS für alle Routen aktivieren
 
+
 def get_company_info(symbols):
     return {symbol: yf.Ticker(symbol).info for symbol in symbols}
 
@@ -255,124 +256,144 @@ def create_structural_balance_sheet_table(ticker_symbols):
     return html_tables
 
 def create_dashboard(symbols):
+    """
+    Erstellt ein gestapeltes Balkendiagramm für Kapital und Verbindlichkeiten der Unternehmen.
+
+    Args:
+        symbols (list): Liste der Ticker-Symbole.
+
+    Returns:
+        plotly.graph_objects.Figure: Das erstellte Balkendiagramm.
+    """
     balance_sheets = {ticker: get_balance_sheet(ticker) for ticker in symbols}
-    print("Balance Sheets:", balance_sheets)  # Debugging-Ausgabe
     fig = go.Figure()
+
+    # Feste Farben für die Komponenten
     colors = {
-        'Eigenkapital': 'blue',
-        'Langfristige Verbindlichkeiten': 'red',
-        'Kurzfristige Verbindlichkeiten': 'green'
+        'Eigenkapital': '#1f77b4',  # Blau
+        'Langfristige Verbindlichkeiten': '#ff7f0e',  # Orange
+        'Kurzfristige Verbindlichkeiten': '#2ca02c'  # Grün
     }
+
+    # Kontrollvariablen, um die Legende nur einmal pro Komponente anzuzeigen
+    show_legend = {
+        'Eigenkapital': True,
+        'Langfristige Verbindlichkeiten': True,
+        'Kurzfristige Verbindlichkeiten': True
+    }
+
     for ticker, balance_sheet in balance_sheets.items():
-        total_2023 = balance_sheet.loc['Eigenkapital', '2023'] + balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] + balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023']
-        total_2024 = balance_sheet.loc['Eigenkapital', '2024'] + balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] + balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024']
+        # Berechnung der Summen für 2023 und 2024
+        total_2023 = (
+            balance_sheet.loc['Eigenkapital', '2023'] +
+            balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] +
+            balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023']
+        )
+        total_2024 = (
+            balance_sheet.loc['Eigenkapital', '2024'] +
+            balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] +
+            balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024']
+        )
+
+        # Werte für 2023
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2023'],
             y=[balance_sheet.loc['Eigenkapital', '2023']],
+            name='Eigenkapital',
             marker_color=colors['Eigenkapital'],
-            hovertext=[f"{balance_sheet.loc['Eigenkapital', '2023'] / total_2023:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=show_legend['Eigenkapital'],
+            hovertemplate='Eigenkapital: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Eigenkapital', '2023'] / total_2023]
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2023'],
             y=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023']],
+            name='Langfristige Verbindlichkeiten',
             marker_color=colors['Langfristige Verbindlichkeiten'],
-            hovertext=[f"{balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] / total_2023:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=show_legend['Langfristige Verbindlichkeiten'],
+            hovertemplate='Langfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] / total_2023]
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2023'],
             y=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023']],
+            name='Kurzfristige Verbindlichkeiten',
             marker_color=colors['Kurzfristige Verbindlichkeiten'],
-            hovertext=[f"{balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023'] / total_2023:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=show_legend['Kurzfristige Verbindlichkeiten'],
+            hovertemplate='Kurzfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023'] / total_2023]
         ))
+
+        # Werte für 2024
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Eigenkapital', '2024']],
+            name='Eigenkapital',
             marker_color=colors['Eigenkapital'],
-            hovertext=[f"{balance_sheet.loc['Eigenkapital', '2024'] / total_2024:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=False,
+            hovertemplate='Eigenkapital: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Eigenkapital', '2024'] / total_2024]
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2024']],
+            name='Langfristige Verbindlichkeiten',
             marker_color=colors['Langfristige Verbindlichkeiten'],
-            hovertext=[f"{balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] / total_2024:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=False,
+            hovertemplate='Langfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] / total_2024]
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024']],
+            name='Kurzfristige Verbindlichkeiten',
             marker_color=colors['Kurzfristige Verbindlichkeiten'],
-            hovertext=[f"{balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024'] / total_2024:.1%}"],
-            hoverinfo='text',
-            showlegend=False
+            showlegend=False,
+            hovertemplate='Kurzfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024'] / total_2024]
         ))
-    fig.add_trace(go.Bar(
-        x=[None],
-        y=[None],
-        name='Eigenkapital',
-        marker_color=colors['Eigenkapital']
-    ))
-    fig.add_trace(go.Bar(
-        x=[None],
-        y=[None],
-        name='Langfristige Verbindlichkeiten',
-        marker_color=colors['Langfristige Verbindlichkeiten']
-    ))
-    fig.add_trace(go.Bar(
-        x=[None],
-        y=[None],
-        name='Kurzfristige Verbindlichkeiten',
-        marker_color=colors['Kurzfristige Verbindlichkeiten']
-    ))
 
+        # Nach dem ersten Ticker die Legende für diese Komponenten deaktivieren
+        show_legend['Eigenkapital'] = False
+        show_legend['Langfristige Verbindlichkeiten'] = False
+        show_legend['Kurzfristige Verbindlichkeiten'] = False
+
+    # Layout anpassen
     fig.update_layout(
-        barmode='stack',
+        barmode='stack',  # Gestapelte Balken
         title='Kapital und Verbindlichkeiten der Unternehmen (2023 vs 2024)',
         xaxis_title='Unternehmen und Jahr',
-        yaxis_title='Betrag',
+        yaxis_title='Betrag (€)',
         legend_title='Komponenten',
-        xaxis=dict(
-            tickmode='array',
-            tickvals=[f'{ticker} 2023' for ticker in symbols] + [f'{ticker} 2024' for ticker in symbols],
-            ticktext=[f'2023\n{ticker}' for ticker in symbols] + [f'2024\n{ticker}' for ticker in symbols]
+        legend=dict(
+            x=1.05,  # Position der Legende außerhalb des Diagramms
+            y=1,
+            xanchor='left',
+            yanchor='top',
+            bgcolor='rgba(255, 255, 255, 0.5)',
+            bordercolor='black',
+            borderwidth=1
         )
     )
 
     return fig
 
-def generate_random_color():
-    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
 def create_line_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    # Farben für die Unternehmen festlegen
-    company_colors = {ticker: generate_random_color() for ticker in ticker_symbols}
+    # Feste Farben für die Unternehmen
+    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
-    # Erstellen eines Dashboards für gegebene Unternehmen
     for ticker in ticker_symbols:
-        balance_sheets[f'{ticker}'] = get_balance_sheet(ticker)
+        balance_sheets[ticker] = get_balance_sheet(ticker)
 
-    # Hinzufügen der Liniendiagramm-Daten für die Eigenkapitalquote
+    # Eigenkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
-        # Debugging-Ausgabe für Eigenkapitalquote
-        print(f"Ticker: {ticker}, Eigenkapitalquote (vorher): {balance_sheet.loc['Eigenkapitalquote'].values}")
-
         x_values = balance_sheet.columns
         y_values = balance_sheet.loc['Eigenkapitalquote', x_values]
-
-        # Debugging-Ausgabe für x_values und y_values
-        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
-        print(f"Ticker: {ticker}, y-Werte (Eigenkapitalquote): {y_values.values}")
 
         fig.add_trace(go.Scatter(
             x=x_values.tolist(),
@@ -383,17 +404,10 @@ def create_line_chart(ticker_symbols):
             visible=True
         ))
 
-    # Hinzufügen der Liniendiagramm-Daten für die Fremdkapitalquote
+    # Fremdkapitalquote
     for ticker, balance_sheet in balance_sheets.items():
-        # Debugging-Ausgabe für Fremdkapitalquote
-        print(f"Ticker: {ticker}, Fremdkapitalquote (vorher): {balance_sheet.loc['Fremdkapitalquote'].values}")
-
         x_values = balance_sheet.columns
         y_values = balance_sheet.loc['Fremdkapitalquote', x_values]
-
-        # Debugging-Ausgabe für x_values und y_values
-        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
-        print(f"Ticker: {ticker}, y-Werte (Fremdkapitalquote): {y_values.values}")
 
         fig.add_trace(go.Scatter(
             x=x_values.tolist(),
@@ -404,17 +418,10 @@ def create_line_chart(ticker_symbols):
             visible=False
         ))
 
-    # Hinzufügen der Liniendiagramm-Daten für den statischen Verschuldungsgrad
+    # Statischer Verschuldungsgrad
     for ticker, balance_sheet in balance_sheets.items():
-        # Debugging-Ausgabe für Statischer Verschuldungsgrad
-        print(f"Ticker: {ticker}, Statischer Verschuldungsgrad (vorher): {balance_sheet.loc['Statischer Verschuldungsgrad'].values}")
-
         x_values = balance_sheet.columns
         y_values = balance_sheet.loc['Statischer Verschuldungsgrad', x_values]
-
-        # Debugging-Ausgabe für x_values und y_values
-        print(f"Ticker: {ticker}, x-Werte (Jahre): {x_values}")
-        print(f"Ticker: {ticker}, y-Werte (Statischer Verschuldungsgrad): {y_values.values}")
 
         fig.add_trace(go.Scatter(
             x=x_values.tolist(),
@@ -422,50 +429,32 @@ def create_line_chart(ticker_symbols):
             mode='lines+markers',
             name=f'{ticker} Statischer Verschuldungsgrad',
             line=dict(color=company_colors[ticker]),
-            visible=False,
-            connectgaps=True  # Lücken ignorieren und verbinden
+            visible=False
         ))
-    # Layout anpassen für das interaktive Diagramm
+
+    # Layout
     fig.update_layout(
         title='Eigenkapitalquote, Fremdkapitalquote und Statischer Verschuldungsgrad',
         xaxis_title='Jahr',
         yaxis_title='Quote',
         legend_title='Unternehmen',
-        legend=dict(
-            x=1,
-            y=1,
-            xanchor='left',
-            yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0.5)',
-            bordercolor='black',
-            borderwidth=1
-        ),
         updatemenus=[
             {
                 'buttons': [
                     {
                         'label': 'Eigenkapitalquote',
                         'method': 'update',
-                        'args': [
-                            {'visible': [True if i < len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
-                            {'title': 'Eigenkapitalquote'}
-                        ]
+                        'args': [{'visible': [True if i < len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]}]
                     },
                     {
                         'label': 'Fremdkapitalquote',
                         'method': 'update',
-                        'args': [
-                            {'visible': [True if len(ticker_symbols) <= i < 2 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
-                            {'title': 'Fremdkapitalquote'}
-                        ]
+                        'args': [{'visible': [True if len(ticker_symbols) <= i < 2 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]}]
                     },
                     {
                         'label': 'Verschuldungsquote',
                         'method': 'update',
-                        'args': [
-                            {'visible': [True if 2 * len(ticker_symbols) <= i < 3 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]},
-                            {'title': 'Verschuldungsquote'}
-                        ]
+                        'args': [{'visible': [True if 2 * len(ticker_symbols) <= i < 3 * len(ticker_symbols) else False for i in range(3 * len(ticker_symbols))]}]
                     }
                 ],
                 'direction': 'down',
@@ -480,13 +469,12 @@ def create_coverage_ratios_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    # Farben für die Unternehmen festlegen
-    company_colors = {ticker: generate_random_color() for ticker in ticker_symbols}
+    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
     for ticker in ticker_symbols:
         balance_sheets[ticker] = get_balance_sheet(ticker)
 
-    # Hinzufügen der Liniendiagramm-Daten für die 1. und 2. Anlagendeckung
     for ticker, balance_sheet in balance_sheets.items():
         x_values = balance_sheet.columns
 
@@ -507,24 +495,14 @@ def create_coverage_ratios_chart(ticker_symbols):
             y=y_values_coverage_2.tolist(),
             mode='lines+markers',
             name=f'{ticker} Anlagendeckungsgrad 2',
-            line=dict(color=company_colors[ticker], dash='dash')  # Gepunktete Linie für 2. Anlagendeckung
+            line=dict(color=company_colors[ticker], dash='dash')
         ))
 
-    # Layout anpassen
     fig.update_layout(
         title='1. und 2. Anlagendeckung im Zeitverlauf',
         xaxis_title='Jahr',
         yaxis_title='Anlagendeckungsgrad',
-        legend_title='Unternehmen',
-        legend=dict(
-            x=1,
-            y=1,
-            xanchor='left',
-            yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0.5)',
-            bordercolor='black',
-            borderwidth=1
-        )
+        legend_title='Unternehmen'
     )
 
     return fig
@@ -533,13 +511,12 @@ def create_liquidity_ratios_chart(ticker_symbols):
     balance_sheets = {}
     fig = go.Figure()
 
-    # Farben für die Unternehmen festlegen
-    company_colors = {ticker: generate_random_color() for ticker in ticker_symbols}
+    TICKER_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    company_colors = {ticker: TICKER_COLORS[i] for i, ticker in enumerate(ticker_symbols)}
 
     for ticker in ticker_symbols:
         balance_sheets[ticker] = get_balance_sheet(ticker)
 
-    # Hinzufügen der Liniendiagramm-Daten für die 1., 2. und 3. Liquiditätsgrade
     for ticker, balance_sheet in balance_sheets.items():
         x_values = balance_sheet.columns
 
@@ -560,7 +537,7 @@ def create_liquidity_ratios_chart(ticker_symbols):
             y=y_values_liquidity_2.tolist(),
             mode='lines+markers',
             name=f'{ticker} 2. Liquiditätsgrad',
-            line=dict(color=company_colors[ticker], dash='dash')  # Gepunktete Linie für 2. Liquiditätsgrad
+            line=dict(color=company_colors[ticker], dash='dash')
         ))
 
         # 3. Liquiditätsgrad
@@ -570,24 +547,14 @@ def create_liquidity_ratios_chart(ticker_symbols):
             y=y_values_liquidity_3.tolist(),
             mode='lines+markers',
             name=f'{ticker} 3. Liquiditätsgrad',
-            line=dict(color=company_colors[ticker], dash='dot')  # Gepunktete Linie für 3. Liquiditätsgrad
+            line=dict(color=company_colors[ticker], dash='dot')
         ))
 
-    # Layout anpassen
     fig.update_layout(
         title='1., 2. und 3. Liquiditätsgrade im Zeitverlauf',
         xaxis_title='Jahr',
         yaxis_title='Liquiditätsgrad',
-        legend_title='Unternehmen',
-        legend=dict(
-            x=1,
-            y=1,
-            xanchor='left',
-            yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0.5)',
-            bordercolor='black',
-            borderwidth=1
-        )
+        legend_title='Unternehmen'
     )
 
     return fig

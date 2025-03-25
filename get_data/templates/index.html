@@ -207,7 +207,13 @@
             const ticker = input.value.trim().toUpperCase();
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = '';
-
+            
+            // Überprüfen, ob die maximale Anzahl von Tickern erreicht wurde
+            if (tickers.length >= 5) {
+                errorMessage.textContent = 'Sie können maximal 5 Ticker gleichzeitig auswählen.';
+                return;
+            }
+        
             if (ticker && !tickers.includes(ticker)) {
                 const isValid = await checkTickerValidity(ticker);
                 if (isValid) {
@@ -217,9 +223,11 @@
                 } else {
                     errorMessage.textContent = 'Ungültiges Tickersymbol. Bitte versuchen Sie es erneut.';
                 }
+            } else if (tickers.includes(ticker)) {
+                errorMessage.textContent = 'Dieser Ticker wurde bereits hinzugefügt.';
             }
         }
-
+    
         async function checkTickerValidity(ticker) {
             const response = await fetch('/check_ticker', {
                 method: 'POST',
@@ -231,21 +239,28 @@
             const data = await response.json();
             return data.is_valid;
         }
-
+    
         function removeTicker(ticker) {
             tickers = tickers.filter(t => t !== ticker);
             updateTickerList();
         }
 
-        function updateTickerList() {
-            const list = document.getElementById('ticker-list');
-            list.innerHTML = '';
-            tickers.forEach(ticker => {
-                const li = document.createElement('li');
-                li.innerHTML = `${ticker} <button onclick="removeTicker('${ticker}')">Löschen</button>`;
-                list.appendChild(li);
-            });
+    function updateTickerList() {
+        const list = document.getElementById('ticker-list');
+        list.innerHTML = '';
+        tickers.forEach(ticker => {
+            const li = document.createElement('li');
+            li.innerHTML = `${ticker} <button onclick="removeTicker('${ticker}')">Löschen</button>`;
+            list.appendChild(li);
+        });
+    }
+
+    // Event-Listener für die Enter-Taste
+    document.getElementById('ticker-input').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            addTicker();
         }
+    });
 
         async function createDashboard() {
             const tableContainer = document.getElementById('table-container');
