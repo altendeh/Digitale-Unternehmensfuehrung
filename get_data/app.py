@@ -146,23 +146,16 @@ def is_valid_ticker(ticker_symbol):
 
 def create_structural_balance_sheet_table(ticker_symbols):
     """
-    Erstellt eine Strukturbilanz-Tabelle für die angegebenen Ticker-Symbole.
+    Erstellt eine Strukturbilanz-Tabelle für die angegebenen Ticker-Symbole im gewünschten HTML-Format.
 
     Args:
         ticker_symbols (list): Liste der Ticker-Symbole.
 
     Returns:
-        plotly.graph_objects.Figure: Die erstellte Tabelle als Plotly-Figur.
+        str: HTML-Code der Strukturbilanz-Tabelle.
     """
-    from plotly.graph_objects import Table, Figure
+    html_tables = ""
 
-    # Farben für die Tabelle
-    header_color = '#2b3e50'
-    cell_color = '#1e1e1e'
-    text_color = 'white'
-
-    # Daten für die Tabelle sammeln
-    rows = []
     for ticker in ticker_symbols:
         balance_sheet = get_balance_sheet(ticker)
         years = [col for col in balance_sheet.columns if col in ['2023', '2024']]
@@ -171,6 +164,7 @@ def create_structural_balance_sheet_table(ticker_symbols):
             continue
 
         for year in sorted(years, reverse=True):
+            # Werte extrahieren
             anlage = balance_sheet.loc['Gesamtanlagevermögen', year]
             umlauf = balance_sheet.loc['Umlaufvermögen', year]
             summe_aktiva = anlage + umlauf
@@ -180,44 +174,85 @@ def create_structural_balance_sheet_table(ticker_symbols):
             fk_kurz = balance_sheet.loc['Kurzfristige Verbindlichkeiten', year]
             summe_passiva = ek + fk_lang + fk_kurz
 
-            rows.append([
-                f"{ticker} ({year})",  # Ticker und Jahr
-                f"{anlage:,.0f} €",    # Anlagevermögen
-                f"{umlauf:,.0f} €",    # Umlaufvermögen
-                f"{summe_aktiva:,.0f} €",  # Summe Aktiva
-                f"{ek:,.0f} €",        # Eigenkapital
-                f"{fk_lang:,.0f} €",   # Langfristige Verbindlichkeiten
-                f"{fk_kurz:,.0f} €",   # Kurzfristige Verbindlichkeiten
-                f"{summe_passiva:,.0f} €"  # Summe Passiva
-            ])
+            # HTML-Tabelle erstellen
+            table_html = f"""
+            <style>
+                .bilanz-table {{
+                    border-collapse: collapse;
+                    width: 100%;
+                    table-layout: fixed;
+                    font-family: Arial, sans-serif;
+                    margin-bottom: 40px;
+                }}
+                .bilanz-table th, .bilanz-table td {{
+                    border: 1px solid #333;
+                    padding: 10px;
+                    text-align: left;
+                }}
+                .bilanz-table th {{
+                    background-color: #2b3e50;
+                    color: white;
+                }}
+                .bilanz-table td {{
+                    background-color: #1e1e1e;
+                    color: white;
+                }}
+                .sum-row td {{
+                    background-color: #333;
+                    color: #ccc;
+                    font-weight: bold;
+                }}
+                .bilanz-title {{
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-top: 20px;
+                    margin-bottom: 10px;
+                    font-family: Arial, sans-serif;
+                    color: white;
+                }}
+            </style>
 
-    # Tabelle erstellen
-    fig = Figure(data=[Table(
-        header=dict(
-            values=[
-                "Unternehmen (Jahr)", "Anlagevermögen", "Umlaufvermögen", "Summe Aktiva",
-                "Eigenkapital", "Langfristige Verbindlichkeiten", "Kurzfristige Verbindlichkeiten", "Summe Passiva"
-            ],
-            fill_color=header_color,
-            font=dict(color=text_color, size=12),
-            align='center'
-        ),
-        cells=dict(
-            values=list(zip(*rows)),  # Transponiere die Zeilen in Spalten
-            fill_color=cell_color,
-            font=dict(color=text_color, size=11),
-            align='center'
-        )
-    )])
+            <div class="bilanz-title">Strukturbilanz von {ticker} – Jahr {year}</div>
+            <table class="bilanz-table">
+                <thead>
+                    <tr>
+                        <th>Aktiva</th>
+                        <th>Wert ({year})</th>
+                        <th>Passiva</th>
+                        <th>Wert ({year})</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Anlagevermögen</td>
+                        <td>{anlage:,.0f} €</td>
+                        <td>Eigenkapital</td>
+                        <td>{ek:,.0f} €</td>
+                    </tr>
+                    <tr>
+                        <td>Umlaufvermögen</td>
+                        <td>{umlauf:,.0f} €</td>
+                        <td>Langfristige Verbindlichkeiten</td>
+                        <td>{fk_lang:,.0f} €</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>Kurzfristige Verbindlichkeiten</td>
+                        <td>{fk_kurz:,.0f} €</td>
+                    </tr>
+                    <tr class="sum-row">
+                        <td>Summe Aktiva</td>
+                        <td>{summe_aktiva:,.0f} €</td>
+                        <td>Summe Passiva</td>
+                        <td>{summe_passiva:,.0f} €</td>
+                    </tr>
+                </tbody>
+            </table>
+            """
+            html_tables += table_html
 
-    # Layout anpassen
-    fig.update_layout(
-        title="Strukturbilanz der Unternehmen",
-        margin=dict(l=20, r=20, t=40, b=20),
-        height=400 + len(rows) * 30  # Dynamische Höhe basierend auf der Anzahl der Zeilen
-    )
-
-    return fig
+    return html_tables
 
 def create_dashboard(symbols):
     balance_sheets = {ticker: get_balance_sheet(ticker) for ticker in symbols}
@@ -606,8 +641,8 @@ def update_structural_balance_sheet():
     if not symbols:
         return jsonify({"error": "Keine Symbole angegeben"}), 400
 
-    fig = create_structural_balance_sheet_table(symbols)
-    return jsonify(fig.to_json())
+    html_table = create_structural_balance_sheet_table(symbols)
+    return jsonify({"html": html_table})
 
 @app.route('/update_dashboard', methods=['POST'])
 def update_dashboard():

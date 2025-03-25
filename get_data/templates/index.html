@@ -274,12 +274,14 @@
                 },
                 body: JSON.stringify({ symbols: tickers })
             });
-            const structuralBalanceSheetFig = await structuralBalanceSheetResponse.json();
-            console.log("Structural Balance Sheet JSON:", structuralBalanceSheetFig);  // Debugging-Ausgabe
-            const structuralBalanceSheetFigData = JSON.parse(structuralBalanceSheetFig);
-            Plotly.newPlot('structural-balance-sheet-container', structuralBalanceSheetFigData.data, structuralBalanceSheetFigData.layout, {responsive: true});
-            document.getElementById('structural-balance-sheet-title').classList.remove('hidden'); // Überschrift anzeigen
-            document.getElementById('structural-balance-sheet-description').classList.remove('hidden'); // Beschreibung anzeigen
+            const structuralBalanceSheetData = await structuralBalanceSheetResponse.json();
+            if (structuralBalanceSheetData.html) {
+                document.getElementById('structural-balance-sheet-container').innerHTML = structuralBalanceSheetData.html;
+                document.getElementById('structural-balance-sheet-title').classList.remove('hidden'); // Überschrift anzeigen
+                document.getElementById('structural-balance-sheet-description').classList.remove('hidden'); // Beschreibung anzeigen
+            } else {
+                console.error("Fehler beim Laden der Strukturbilanz-Tabelle:", structuralBalanceSheetData.error);
+            }
 
             // Dashboard erstellen
             const dashboardResponse = await fetch('/update_dashboard', {
