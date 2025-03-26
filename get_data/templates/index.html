@@ -15,27 +15,30 @@
         <div class="left-column">
             <h1>Navigation</h1>
             <ul class="nav-list">
-                <li><a href="#chart-table-title">Unternehmensinformationen</a></li>
-                <li><a href="#chart-structural-balance-sheet-title">Strukturbilanz</a></li>
-                <li><a href="#chart-dashboard-title">Kapital und Verbindlichkeiten</a></li>
-                <li><a href="#chart-line-chart-title">KPIs im Zeitverlauf</a></li>
-                <li><a href="#chart-coverage-ratios-title">Anlagendeckungsgrade</a></li>
-                <li><a href="#chart-liquidity-ratios-title">Liquiditätsgrade</a></li>
+                <li><a href="#table-title">Unternehmensinformationen</a></li>
+                <li><a href="#structural-balance-sheet-title">Strukturbilanz</a></li>
+                <li><a href="#dashboard-title">Kapital und Verbindlichkeiten</a></li>
+                <li><a href="#line-chart-title">KPIs im Zeitverlauf</a></li>
+                <li><a href="#coverage-ratios-title">Anlagendeckungsgrade</a></li>
+                <li><a href="#liquidity-ratios-title">Liquiditätsgrade</a></li>
             </ul>
         </div>
 
         <!-- Hauptinhalt -->
         <div class="main-column">
             <h1>Unternehmensvergleich</h1>
+            <button id="toggle-description-button" onclick="toggleDescription()">Beschreibung ein-/ausklappen</button>
             <div class="description">
-                <h2>Willkommen auf der Unternehmensvergleichs-Webseite!</h2>
-                <p>Hier können Sie den Cashflow und verschiedene KPIs (Key Performance Indicators) von Unternehmen vergleichen. Folgen Sie diesen Schritten, um Ihr Dashboard zu erstellen:</p>
+                <h2>Willkommen zur Unternehmensvergleichs-Anwendung!</h2>
+                <p>Mit dieser Anwendung können Sie Finanzdaten und KPIs (Key Performance Indicators) verschiedener Unternehmen analysieren und vergleichen. Folgen Sie den untenstehenden Schritten, um Ihr Dashboard zu erstellen:</p>
                 <ol>
                     <li>Geben Sie das Tickersymbol eines Unternehmens in das Eingabefeld ein und klicken Sie auf "Hinzufügen".</li>
-                    <li>Wiederholen Sie diesen Vorgang für alle Unternehmen, die Sie vergleichen möchten.</li>
-                    <li>Klicken Sie auf "Dashboard erstellen", um die Diagramme zu generieren.</li>
-                    <li>Nutzen Sie die Navigation auf der linken Seite, um zwischen den verschiedenen Diagrammen zu wechseln.</li>
+                    <li>Fügen Sie weitere Unternehmen hinzu, die Sie vergleichen möchten.</li>
+                    <li>Klicken Sie auf "Dashboard erstellen", um Diagramme und Tabellen zu generieren.</li>
+                    <li>Nutzen Sie die Navigation auf der linken Seite, um zwischen verschiedenen Diagrammen und Analysen zu wechseln.</li>
+                    <li>Speichern Sie Dashboards, um später darauf zurückzugreifen, oder löschen Sie sie, wenn sie nicht mehr benötigt werden.</li>
                 </ol>
+                <p>Die Diagramme und Tabellen bieten Ihnen Einblicke in wichtige Kennzahlen wie Umsatz, Gewinn, Liquiditätsgrade und vieles mehr. Starten Sie jetzt und entdecken Sie die Finanzdaten Ihrer ausgewählten Unternehmen!</p>
             </div>
 
             
@@ -77,6 +80,7 @@
 
         <!-- Rechte Spalte -->
         <div class="right-column">
+            <button class="toggle-button" onclick="toggleColumn('right-column', 'right')">&gt;</button>
             <h2>Ausgewählte Ticker</h2>
         
             <!-- Autovervollständigung für Tickersymbole -->

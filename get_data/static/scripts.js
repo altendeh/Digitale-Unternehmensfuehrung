@@ -182,6 +182,15 @@ async function createDashboard() {
     Plotly.newPlot('liquidity-ratios-container', liquidityRatiosFigData.data, liquidityRatiosFigData.layout, { responsive: true });
     document.getElementById('liquidity-ratios-title').classList.remove('hidden');
     document.getElementById('liquidity-ratios-description').classList.remove('hidden');
+
+    // Beschreibung einklappen
+    const descriptionBox = document.querySelector('.description');
+    descriptionBox.classList.add('hidden');
+    descriptionBox.style.maxHeight = '0';
+
+    // Button-Text aktualisieren
+    const toggleButton = document.getElementById('toggle-description-button');
+    toggleButton.textContent = 'Beschreibung einblenden';
 }
 
 function saveDashboard() {
@@ -306,4 +315,46 @@ function selectTicker(ticker) {
 
     // Blende die Vorschlagsliste aus 
     suggestionsList.style.display = "none";
+}
+
+function toggleColumn(columnClass, direction) {
+    const column = document.querySelector(`.${columnClass}`);
+    console.log('Toggling column:', column); // Debugging
+    const button = column.querySelector('.toggle-button');
+
+    if (column.classList.contains('collapsed')) {
+        column.classList.remove('collapsed');
+        button.innerHTML = direction === 'left' ? '&lt;' : '&gt;';
+    } else {
+        column.classList.add('collapsed');
+        button.innerHTML = direction === 'left' ? '&gt;' : '&lt;';
+    }
+}
+
+function toggleDescription() {
+    const descriptionBox = document.querySelector('.description');
+    const toggleButton = document.getElementById('toggle-description-button');
+
+    if (descriptionBox.classList.contains('hidden')) {
+        // Entferne die Klasse "hidden" und setze die tatsächliche Höhe
+        descriptionBox.classList.remove('hidden');
+        descriptionBox.style.maxHeight = descriptionBox.scrollHeight + 'px';
+        toggleButton.textContent = 'Beschreibung ausklappen';
+
+        // Entferne die maxHeight nach der Animation, um dynamische Inhalte zu unterstützen
+        setTimeout(() => {
+            descriptionBox.style.maxHeight = '';
+        }, 300); // Dauer der CSS-Transition
+    } else {
+        // Setze die aktuelle Höhe, bevor die Box eingeklappt wird
+        descriptionBox.style.maxHeight = descriptionBox.scrollHeight + 'px';
+
+        // Füge die Klasse "hidden" hinzu und setze maxHeight auf 0
+        setTimeout(() => {
+            descriptionBox.classList.add('hidden');
+            descriptionBox.style.maxHeight = '0';
+        }, 10); // Kurzer Timeout, um die Transition zu starten
+
+        toggleButton.textContent = 'Beschreibung einblenden';
+    }
 }

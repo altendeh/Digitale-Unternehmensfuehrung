@@ -13,9 +13,9 @@ CORS(app)  # CORS für alle Routen aktivieren
 # Globale Konfiguration
 CONFIG = {
     'COLORS': {
-        'Eigenkapital': '#1f77b4',  # Blau
-        'Langfristige Verbindlichkeiten': '#ff7f0e',  # Orange
-        'Kurzfristige Verbindlichkeiten': '#2ca02c',  # Grün
+        #'Eigenkapital': '#1f77b4',  # Blau
+        #'Langfristige Verbindlichkeiten': '#ff7f0e',  # Orange
+        #'Kurzfristige Verbindlichkeiten': '#2ca02c',  # Grün
         'TICKER_COLORS': ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
     },
     'DEFAULT_YEARS': ['2023', '2024']
@@ -229,11 +229,7 @@ def create_structural_balance_sheet_table(ticker_symbols):
             continue
 
         # Überschrift für den Ticker hinzufügen
-        html_tables += f"""
-        <div class="ticker-title" style="font-size: 24px; font-weight: bold; margin-top: 30px; color: black;">
-            Strukturbilanz für {ticker}
-        </div>
-        """
+        
 
         for year in sorted(years, reverse=True):
             # Werte extrahieren
@@ -280,7 +276,7 @@ def create_structural_balance_sheet_table(ticker_symbols):
                     margin-top: 20px;
                     margin-bottom: 10px;
                     font-family: Arial, sans-serif;
-                    color: white;
+                    color: black;
                 }}
             </style>
 
@@ -339,12 +335,8 @@ def create_dashboard(symbols):
     balance_sheets = {ticker: get_balance_sheet(ticker) for ticker in symbols}
     fig = go.Figure()
 
-    # Feste Farben für die Komponenten
-    colors = {
-        'Eigenkapital': '#1f77b4',  # Blau
-        'Langfristige Verbindlichkeiten': '#ff7f0e',  # Orange
-        'Kurzfristige Verbindlichkeiten': '#2ca02c'  # Grün
-    }
+    # Farben aus der globalen Konfiguration
+    ticker_colors = CONFIG['COLORS']['TICKER_COLORS']
 
     # Kontrollvariablen, um die Legende nur einmal pro Komponente anzuzeigen
     show_legend = {
@@ -353,7 +345,9 @@ def create_dashboard(symbols):
         'Kurzfristige Verbindlichkeiten': True
     }
 
-    for ticker, balance_sheet in balance_sheets.items():
+    for index, (ticker, balance_sheet) in enumerate(balance_sheets.items()):
+        base_color = ticker_colors[index % len(ticker_colors)]  # Zyklische Auswahl der Basisfarbe
+
         # Berechnung der Summen für 2023 und 2024
         total_2023 = (
             balance_sheet.loc['Eigenkapital', '2023'] +
@@ -366,62 +360,64 @@ def create_dashboard(symbols):
             balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024']
         )
 
-        # Werte für 2023
+        # Eigenkapital für 2023 und 2024
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2023'],
             y=[balance_sheet.loc['Eigenkapital', '2023']],
             name='Eigenkapital',
-            marker_color=colors['Eigenkapital'],
-            showlegend=show_legend['Eigenkapital'],
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 1.0)'),
             hovertemplate='Eigenkapital: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Eigenkapital', '2023'] / total_2023]
+            customdata=[balance_sheet.loc['Eigenkapital', '2023'] / total_2023 if total_2023 != 0 else 0],
+            showlegend=show_legend['Eigenkapital']
         ))
-        fig.add_trace(go.Bar(
-            x=[f'{ticker} 2023'],
-            y=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023']],
-            name='Langfristige Verbindlichkeiten',
-            marker_color=colors['Langfristige Verbindlichkeiten'],
-            showlegend=show_legend['Langfristige Verbindlichkeiten'],
-            hovertemplate='Langfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] / total_2023]
-        ))
-        fig.add_trace(go.Bar(
-            x=[f'{ticker} 2023'],
-            y=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023']],
-            name='Kurzfristige Verbindlichkeiten',
-            marker_color=colors['Kurzfristige Verbindlichkeiten'],
-            showlegend=show_legend['Kurzfristige Verbindlichkeiten'],
-            hovertemplate='Kurzfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023'] / total_2023]
-        ))
-
-        # Werte für 2024
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Eigenkapital', '2024']],
             name='Eigenkapital',
-            marker_color=colors['Eigenkapital'],
-            showlegend=False,
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 1.0)'),
             hovertemplate='Eigenkapital: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Eigenkapital', '2024'] / total_2024]
+            customdata=[balance_sheet.loc['Eigenkapital', '2024'] / total_2024 if total_2024 != 0 else 0],
+            showlegend=False  # Nach dem ersten Auftreten deaktivieren
+        ))
+
+        # Langfristige Verbindlichkeiten für 2023 und 2024
+        fig.add_trace(go.Bar(
+            x=[f'{ticker} 2023'],
+            y=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023']],
+            name='Langfristige Verbindlichkeiten',
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 0.7)'),
+            hovertemplate='Langfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2023'] / total_2023 if total_2023 != 0 else 0],
+            showlegend=show_legend['Langfristige Verbindlichkeiten']
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2024']],
             name='Langfristige Verbindlichkeiten',
-            marker_color=colors['Langfristige Verbindlichkeiten'],
-            showlegend=False,
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 0.7)'),
             hovertemplate='Langfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] / total_2024]
+            customdata=[balance_sheet.loc['Langfristige Verbindlichkeiten', '2024'] / total_2024 if total_2024 != 0 else 0],
+            showlegend=False  # Nach dem ersten Auftreten deaktivieren
+        ))
+
+        # Kurzfristige Verbindlichkeiten für 2023 und 2024
+        fig.add_trace(go.Bar(
+            x=[f'{ticker} 2023'],
+            y=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023']],
+            name='Kurzfristige Verbindlichkeiten',
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 0.4)'),
+            hovertemplate='Kurzfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
+            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2023'] / total_2023 if total_2023 != 0 else 0],
+            showlegend=show_legend['Kurzfristige Verbindlichkeiten']
         ))
         fig.add_trace(go.Bar(
             x=[f'{ticker} 2024'],
             y=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024']],
             name='Kurzfristige Verbindlichkeiten',
-            marker_color=colors['Kurzfristige Verbindlichkeiten'],
-            showlegend=False,
+            marker=dict(color=f'rgba({int(base_color[1:3], 16)}, {int(base_color[3:5], 16)}, {int(base_color[5:7], 16)}, 0.4)'),
             hovertemplate='Kurzfristige Verbindlichkeiten: %{y:,.0f} €<br>Prozentual: %{customdata:.1%}',
-            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024'] / total_2024]
+            customdata=[balance_sheet.loc['Kurzfristige Verbindlichkeiten', '2024'] / total_2024 if total_2024 != 0 else 0],
+            showlegend=False  # Nach dem ersten Auftreten deaktivieren
         ))
 
         # Nach dem ersten Ticker die Legende für diese Komponenten deaktivieren
