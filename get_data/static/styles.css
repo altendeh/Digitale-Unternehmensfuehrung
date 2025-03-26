@@ -1,0 +1,550 @@
+/* Global Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    background-color: #f4f4f9; /* Leichtes Grau für besseren Kontrast */
+    color: #333; /* Dunklere Schriftfarbe für bessere Lesbarkeit */
+}
+
+.hidden {
+    display: none;
+}
+
+.container {
+    display: flex;
+    width: 100vw;
+}
+
+/* Left Column Styles */
+.left-column {
+    min-width: 220px;
+    max-width: 300px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: #2c3e50; /* Dunkles Blau */
+    color: #ecf0f1; /* Helles Grau */
+    border-right: 1px solid #bdc3c7; /* Dezente Trennung */
+}
+
+.left-column h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.nav-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-list li {
+    margin-bottom: 15px;
+}
+
+.nav-list a {
+    text-decoration: none;
+    color: #ecf0f1;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-list a:hover {
+    color: #3498db; /* Helles Blau beim Hover */
+}
+
+/* Main Column Styles */
+.main-column {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: #ffffff; /* Weiß für Klarheit */
+    border-left: 1px solid #bdc3c7; /* Dezente Trennung */
+}
+
+.main-column h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #2c3e50; /* Dunkles Blau */
+}
+
+.description {
+    margin-bottom: 30px; /* Abstand zur Tabelle */
+    padding: 15px;
+    background-color: #ecf0f1; /* Helles Grau */
+    border: 1px solid #bdc3c7;
+    border-radius: 8px;
+    line-height: 1.6;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: visible; /* Inhalt wird nicht abgeschnitten */
+    opacity: 1;
+    max-height: none; /* Keine Höhenbegrenzung */
+    height: auto; /* Automatische Höhe basierend auf dem Inhalt */
+}
+
+
+
+.description.hidden {
+    max-height: 0; /* Höhe auf 0 reduzieren, wenn ausgeblendet */
+    opacity: 0;
+    padding: 0; /* Entfernt den Innenabstand, wenn ausgeblendet */
+    border: none; /* Entfernt die Umrandung, wenn ausgeblendet */
+}
+
+.description h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.description ol {
+    padding-left: 20px;
+}
+
+.description li {
+    margin-bottom: 10px;
+}
+
+
+
+/* Container für die Spalten */
+.container {
+    display: flex;
+    width: 100%;
+    height: 100vh; /* Volle Höhe des Viewports */
+    position: relative; /* Für die Positionierung der Buttons */
+}
+
+/* Linke Spalte */
+.left-column {
+    width: 20%; /* Standardbreite der linken Spalte */
+    transition: width 0.3s ease; /* Animation für das Ein- und Ausklappen */
+    overflow: hidden; /* Verhindert, dass Inhalte überlaufen */
+    background-color: #2c3e50; /* Dunkles Blau */
+    color: #ecf0f1; /* Helles Grau */
+    position: relative; /* Für den Button */
+}
+
+/* Rechte Spalte */
+.right-column {
+    width: 20%; /* Standardbreite der rechten Spalte */
+    transition: width 0.3s ease; /* Animation für das Ein- und Ausklappen */
+    overflow: hidden; /* Verhindert, dass Inhalte überlaufen */
+    background-color: #ecf0f1; /* Helles Grau */
+    position: relative; /* Für den Button */
+}
+
+/* Linke Spalte */
+.left-column {
+    width: 20%; /* Standardbreite der linken Spalte */
+    transition: width 0.3s ease; /* Animation für das Ein- und Ausklappen */
+    overflow: hidden; /* Verhindert, dass Inhalte überlaufen */
+    background-color: #2c3e50; /* Dunkles Blau */
+    color: #ecf0f1; /* Helles Grau */
+    position: relative; /* Für den Button */
+}
+
+/* Rechte Spalte */
+.right-column {
+    width: 20%; /* Standardbreite der rechten Spalte */
+    transition: width 0.3s ease; /* Animation für das Ein- und Ausklappen */
+    overflow: hidden; /* Verhindert, dass Inhalte überlaufen */
+    background-color: #ecf0f1; /* Helles Grau */
+    position: relative; /* Für den Button */
+}
+
+/* Buttons für das Ein- und Ausklappen */
+.toggle-button {
+    position: absolute;
+    top: 10px; /* Vertikal zur Mitte der Spalte ausgerichtet */
+    transform: translateY(-50%); /* Zentrierung */
+    width: 25px;
+    height: 25px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    z-index: 10; /* Überlagert andere Inhalte */
+}
+
+/* Button für die linke Spalte */
+.left-column .toggle-button {
+    right: -12.5px; /* Positioniere den Button am rechten Rand der linken Spalte */
+}
+
+/* Button für die rechte Spalte */
+.right-column .toggle-button {
+    left: -12.5px; /* Positioniere den Button am linken Rand der rechten Spalte */
+}
+
+/* Hover-Effekt für die Buttons */
+.toggle-button:hover {
+    background-color: #0056b3;
+}
+
+
+
+/* Eingeklappte rechte Spalte */
+.right-column.collapsed {
+    width: 60px; /* Reduzierte Breite für die eingeklappte rechte Spalte */
+    overflow: hidden; /* Verhindert, dass Inhalte sichtbar bleiben */
+}
+
+
+
+.right-column.collapsed .ticker-autocomplete,
+.right-column.collapsed .ticker-list,
+.right-column.collapsed .dashboard-actions {
+    display: none; /* Blendet die Inhalte aus, wenn die Spalte eingeklappt ist */
+}
+
+
+
+.right-column {
+    transition: width 0.3s ease; /* Sanfte Animation für die Breitenänderung */
+}
+
+
+
+/* Error Message Styles */
+.error-message {
+    color: #e74c3c; /* Rot für Fehler */
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+/* Table and Chart Styles */
+h2 {
+    font-size: 1.5rem;
+    margin-top: 20px;
+    color: #2c3e50;
+}
+
+p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+/* Rechte Spalte */
+.right-column {
+    width: 300px; /* Feste Breite */
+    display: flex;
+    flex-direction: column; /* Elemente vertikal anordnen */
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background-color: #ecf0f1; /* Helles Grau */
+    border-left: 1px solid #bdc3c7; /* Dezente Trennung */
+}
+
+.right-column h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+/* Button Styles */
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button:disabled {
+    position: relative; /* Für den Tooltip */
+    background-color: #bdc3c7; /* Grauer Hintergrund */
+    color: #7f8c8d; /* Graue Schrift */
+    cursor: not-allowed; /* Zeigt an, dass der Button nicht klickbar ist */
+    opacity: 0.6; /* Leicht transparent */
+}
+
+button:disabled::after {
+    content: "Änderungen am Dashboard erforderlich"; /* Tooltip-Text */
+    position: absolute;
+    top: 110%; /* Unterhalb des Buttons */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333; /* Dunkler Hintergrund für den Tooltip */
+    color: #fff; /* Weiße Schrift */
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0; /* Unsichtbar, bis Hover */
+    pointer-events: none; /* Tooltip ist nicht interaktiv */
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+button:disabled:hover::after {
+    opacity: 1; /* Tooltip sichtbar machen */
+} 
+
+
+/* Autovervollständigung */
+.ticker-autocomplete {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung von Eingabefeld und Button */
+    width: 100%;
+    border: 1px solid #bdc3c7; /* Gemeinsame Umrandung */
+    border-radius: 4px; /* Abgerundete Ecken für das gesamte Eingabefeld */
+    overflow: hidden; /* Verhindert, dass der Button oder das Eingabefeld über die Grenzen hinausragen */
+    height: 40px; /* Einheitliche Höhe für den Container */
+}
+
+#ticker-input {
+    flex: 1; /* Eingabefeld nimmt den verfügbaren Platz ein */
+    padding: 10px;
+    font-size: 1rem;
+    border: none; /* Entfernt die Standardumrandung */
+    outline: none; /* Entfernt den Fokusrahmen */
+    height: 100%; /* Gleiche Höhe wie der Container */
+}
+
+#add-ticker-button {
+    padding: 0 15px; /* Innenabstand für den Button */
+    font-size: 1rem;
+    border: none; /* Entfernt die Standardumrandung */
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    height: calc(100% - 4px); /* Button leicht kleiner machen */
+    margin-top: 2px; /* Button leicht nach oben verschieben */
+    border-left: 1px solid #bdc3c7; /* Trennlinie zwischen Eingabefeld und Button */
+    border-radius: 4px; /* Keine abgerundeten Ecken */
+}
+
+#add-ticker-button:hover {
+    background-color: #2980b9;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+    display: none; /* Standardmäßig ausgeblendet */
+}
+
+.suggestions-list li {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.suggestions-list li:hover {
+    background-color: #f4f4f9;
+}
+
+/* Ausgewählte Ticker */
+.ticker-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    overflow: visible; /* Kein Scrollbar */
+}
+
+.ticker-list li {
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung */
+    justify-content: space-between; /* Platz zwischen Name und Buttons */
+    padding: 2px 5px; /* Minimaler Innenabstand */
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    margin-bottom: 5px; /* Abstand zwischen den Einträgen */
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem; /* Schriftgröße */
+    line-height: 1; /* Zeilenhöhe auf Schriftgröße reduziert */
+    height: 1.8rem; /* Feste Höhe für konsistente Darstellung */
+}
+
+.ticker-list li:hover {
+    background-color: #f9f9f9; /* Leichtes Grau beim Hover */
+}
+
+.ticker-list button {
+    background: none;
+    border: none;
+    color: red; /* Rote Farbe für den Löschen-Button */
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.ticker-list button:hover {
+    color: darkred; /* Dunkleres Rot beim Hover */
+}
+
+/* Gespeicherte Dashboards */
+.saved-dashboards {
+    margin-top: 40px; /* Abstand zur Ticker-Liste */
+}
+
+.saved-dashboards h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.saved-dashboards .ticker-list li {
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung */
+    justify-content: space-between; /* Platz zwischen Name und Buttons */
+    padding: 5px 10px;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.saved-dashboards .ticker-list li:hover {
+    background-color: #f4f4f9; /* Leichtes Grau beim Hover */
+}
+
+.saved-dashboards .ticker-list span {
+    flex: 1; /* Name des Dashboards nimmt den verfügbaren Platz ein */
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung des Textes */
+}
+
+.saved-dashboards .ticker-list .button-group {
+    display: flex; /* Buttons nebeneinander anordnen */
+    align-items: center; /* Vertikale Zentrierung der Buttons */
+    gap: 10px; /* Abstand zwischen den Buttons */
+}
+
+.saved-dashboards .ticker-list button {
+    background: none;
+    border: none;
+    color: #3498db; /* Blau für Aktionen */
+    cursor: pointer;
+    font-size: 0.8rem; /* Kleinere Schriftgröße für Buttons */
+    transition: color 0.3s ease;
+    padding: 5px 10px; /* Konsistenter Innenabstand */
+    border-radius: 4px; /* Abgerundete Ecken */
+    padding: 5px 10px; /* Konsistenter Innenabstand */
+    border-radius: 4px; /* Abgerundete Ecken */
+}
+
+.saved-dashboards .ticker-list button:hover {
+    color: #2980b9; /* Dunkleres Blau beim Hover */
+}
+
+.saved-dashboards .ticker-list button[style="color: red;"] {
+    color: red; /* Rote Farbe für den Löschen-Button */
+}
+
+.saved-dashboards .ticker-list button[style="color: red;"]:hover {
+    color: darkred; /* Dunkleres Rot beim Hover */
+}
+
+/* Dashboard-Aktionen */
+.dashboard-actions {
+    margin-top: 20px;
+}
+
+.dashboard-actions button {
+    margin-right: 10px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-actions button:hover {
+    background-color: #2980b9;
+}
+
+
+.ticker-autocomplete {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+#ticker-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    outline: none;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+}
+
+.suggestions-list li {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.suggestions-list li:hover {
+    background-color: #f4f4f9;
+}

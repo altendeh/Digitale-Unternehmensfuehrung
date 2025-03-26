@@ -4,199 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unternehmensvergleich</title>
+    <!-- Externe CSS-Dateien -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .container {
-            display: flex;
-            flex: 1;
-            width: 100vw;
-        }
-        .left-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .right-column {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .input-group {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        .input-group input {
-            flex: 1;
-            padding: 10px;
-            font-size: 16px;
-        }
-        .input-group button {
-            padding: 10px;
-            font-size: 16px;
-        }
-        .ticker-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            overflow-y: auto;
-        }
-        .ticker-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-        }
-        .ticker-list button {
-            background: none;
-            border: none;
-            color: red;
-            cursor: pointer;
-        }
-        #table-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-        #line-chart-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-        #dashboard-container {
-            flex: 1;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-        .error-message {
-            color: red;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
+        <!-- Navigation -->
         <div class="left-column">
-            <h1>Unternehmensvergleich</h1>
-            <div class="input-group">
-                <input type="text" id="ticker-input" placeholder="Ticker eingeben">
-                <button onclick="addTicker()">Hinzufügen</button>
-            </div>
-            <ul id="ticker-list" class="ticker-list"></ul>
-            <button onclick="createDashboard()">Dashboard erstellen</button>
-            <div id="table-container"></div>
-            <div id="error-message" class="error-message"></div>
+            <h1>Navigation</h1>
+            <ul class="nav-list">
+                <li><a href="#table-title">Unternehmensinformationen</a></li>
+                <li><a href="#structural-balance-sheet-title">Strukturbilanz</a></li>
+                <li><a href="#dashboard-title">Kapital und Verbindlichkeiten</a></li>
+                <li><a href="#line-chart-title">KPIs im Zeitverlauf</a></li>
+                <li><a href="#coverage-ratios-title">Anlagendeckungsgrade</a></li>
+                <li><a href="#liquidity-ratios-title">Liquiditätsgrade</a></li>
+            </ul>
         </div>
-        <div class="right-column">
+
+        <!-- Hauptinhalt -->
+        <div class="main-column">
+            <h1>Unternehmensvergleich</h1>
+            <button id="toggle-description-button" onclick="toggleDescription()">Beschreibung ein-/ausklappen</button>
+            <div class="description">
+                <h2>Willkommen zur Unternehmensvergleichs-Anwendung!</h2>
+                <p>Mit dieser Anwendung können Sie Finanzdaten und KPIs (Key Performance Indicators) verschiedener Unternehmen analysieren und vergleichen. Folgen Sie den untenstehenden Schritten, um Ihr Dashboard zu erstellen:</p>
+                <ol>
+                    <li>Geben Sie das Tickersymbol eines Unternehmens in das Eingabefeld ein und klicken Sie auf "Hinzufügen".</li>
+                    <li>Fügen Sie weitere Unternehmen hinzu, die Sie vergleichen möchten.</li>
+                    <li>Klicken Sie auf "Dashboard erstellen", um Diagramme und Tabellen zu generieren.</li>
+                    <li>Nutzen Sie die Navigation auf der linken Seite, um zwischen verschiedenen Diagrammen und Analysen zu wechseln.</li>
+                    <li>Speichern Sie Dashboards, um später darauf zurückzugreifen, oder löschen Sie sie, wenn sie nicht mehr benötigt werden.</li>
+                </ol>
+                <p>Die Diagramme und Tabellen bieten Ihnen Einblicke in wichtige Kennzahlen wie Umsatz, Gewinn, Liquiditätsgrade und vieles mehr. Starten Sie jetzt und entdecken Sie die Finanzdaten Ihrer ausgewählten Unternehmen!</p>
+            </div>
+
+            
+    
+            <div id="error-message" class="error-message" aria-live="polite"></div>
+
+            <!-- Tabelle -->
+            <h2 id="table-title" class="hidden">Unternehmensinformationen</h2>
+            <div id="table-container"></div>
+            <p id="table-description" class="hidden">Die Tabelle zeigt grundlegende Unternehmensinformationen wie Umsatz, Gewinn und andere finanzielle Kennzahlen.</p>
+        
+            <!-- Strukturbilanz -->
+            <h2 id="structural-balance-sheet-title" class="hidden">Strukturbilanz</h2>
+            <div id="structural-balance-sheet-container"></div>
+            <p id="structural-balance-sheet-description" class="hidden">
+                Diese Tabelle zeigt die Strukturbilanz der ausgewählten Unternehmen für die Jahre 2023 und 2024.
+            </p>
+
+            <!-- Dashboard -->
+            <h2 id="dashboard-title" class="hidden">Kapital und Verbindlichkeiten</h2>
             <div id="dashboard-container"></div>
+            <p id="dashboard-description" class="hidden">Das Dashboard visualisiert das Verhältnis von Kapital und Verbindlichkeiten der ausgewählten Unternehmen.</p>
+        
+            <!-- Liniendiagramm -->
+            <h2 id="line-chart-title" class="hidden">KPIs im Zeitverlauf</h2>
             <div id="line-chart-container"></div>
+            <p id="line-chart-description" class="hidden">Das Liniendiagramm zeigt die Entwicklung der wichtigsten KPIs (Key Performance Indicators) im Zeitverlauf.</p>
+        
+            <!-- Anlagendeckungsgrade -->
+            <h2 id="coverage-ratios-title" class="hidden">Deckungsgrade</h2>
+            <div id="coverage-ratios-container"></div>
+            <p id="coverage-ratios-description" class="hidden">Dieses Diagramm zeigt die 1. und 2. Anlagendeckung der ausgewählten Unternehmen im Zeitverlauf.</p>
+
+            <!-- Liquiditätsgrade -->
+            <h2 id="liquidity-ratios-title" class="hidden">Liquiditätskennzahlen</h2>
+            <div id="liquidity-ratios-container"></div>
+            <p id="liquidity-ratios-description" class="hidden">Dieses Diagramm zeigt die 1., 2. und 3. Liquiditätsgrade der ausgewählten Unternehmen im Zeitverlauf.</p>
+        </div>
+
+        <!-- Rechte Spalte -->
+        <div class="right-column">
+            <button class="toggle-button" onclick="toggleColumn('right-column', 'right')">&gt;</button>
+            <h2>Ausgewählte Ticker</h2>
+        
+            <!-- Autovervollständigung für Tickersymbole -->
+            <div class="ticker-autocomplete">
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        id="ticker-input" 
+                        placeholder="Ticker eingeben..." 
+                        oninput="suggestTickers()" 
+                    />
+                    <button id="add-ticker-button" onclick="addTicker()">+</button>
+                </div>
+                <ul id="ticker-suggestions" class="suggestions-list"></ul>
+            </div>
+        
+            <!-- Liste der ausgewählten Ticker -->
+            <ul id="ticker-list" class="ticker-list"></ul>
+        
+            <!-- Button zum Dashboard erstellen -->
+            <div class="dashboard-actions">
+                <button id="create-dashboard-button" onclick="createDashboard()">Dashboard erstellen</button>
+            </div>
+
+            <!-- Button zum Speichern des Dashboards -->
+            <div class="dashboard-actions">
+                <button onclick="saveDashboard()">Dashboard speichern</button>
+            </div>
+
+            <!-- Gespeicherte Dashboards -->
+            <div class="saved-dashboards">
+                <h2>Gespeicherte Dashboards</h2>
+                <ul id="saved-dashboards-list" class="ticker-list"></ul>
+            </div>
+        
+            
         </div>
     </div>
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script>
-        let tickers = [];
-
-        async function addTicker() {
-            const input = document.getElementById('ticker-input');
-            const ticker = input.value.trim().toUpperCase();
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.textContent = '';
-
-            if (ticker && !tickers.includes(ticker)) {
-                const isValid = await checkTickerValidity(ticker);
-                if (isValid) {
-                    tickers.push(ticker);
-                    updateTickerList();
-                    input.value = '';
-                } else {
-                    errorMessage.textContent = 'Ungültiges Tickersymbol. Bitte versuchen Sie es erneut.';
-                }
-            }
-        }
-
-        async function checkTickerValidity(ticker) {
-            const response = await fetch('/check_ticker', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ticker })
-            });
-            const data = await response.json();
-            return data.is_valid;
-        }
-
-        function removeTicker(ticker) {
-            tickers = tickers.filter(t => t !== ticker);
-            updateTickerList();
-        }
-
-        function updateTickerList() {
-            const list = document.getElementById('ticker-list');
-            list.innerHTML = '';
-            tickers.forEach(ticker => {
-                const li = document.createElement('li');
-                li.innerHTML = `${ticker} <button onclick="removeTicker('${ticker}')">Löschen</button>`;
-                list.appendChild(li);
-            });
-        }
-
-        async function createDashboard() {
-            const tableContainer = document.getElementById('table-container');
-            tableContainer.innerHTML = '';
-
-            const response = await fetch('/update_table', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ symbols: tickers })
-            });
-            const fig = await response.json();
-            console.log("Table JSON:", fig);  // Debugging-Ausgabe
-            const figData = JSON.parse(fig);
-            Plotly.newPlot('table-container', figData.data, figData.layout, {responsive: true});
-
-            // Update Dashboard
-            const dashboardResponse = await fetch('/update_dashboard', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ symbols: tickers })
-            });
-            const dashboardFig = await dashboardResponse.json();
-            console.log("Dashboard JSON:", dashboardFig);  // Debugging-Ausgabe
-            const dashboardFigData = JSON.parse(dashboardFig);
-            Plotly.newPlot('dashboard-container', dashboardFigData.data, dashboardFigData.layout, {responsive: true});
-
-            // Update Line Chart
-            const lineChartResponse = await fetch('/update_line_chart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ symbols: tickers })
-            });
-            const lineChartFig = await lineChartResponse.json();
-            console.log("Line Chart JSON:", lineChartFig);  // Debugging-Ausgabe
-            const lineChartFigData = JSON.parse(lineChartFig);
-            Plotly.newPlot('line-chart-container', lineChartFigData.data, lineChartFigData.layout, {responsive: true});
-        }
-    </script>
+    <!-- Externe JavaScript-Dateien -->
+    <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
+    <script src="/static/scripts.js"></script>
 </body>
 </html>
