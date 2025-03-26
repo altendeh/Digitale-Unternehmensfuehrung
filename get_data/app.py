@@ -686,6 +686,21 @@ def create_company_table(symbols):
 def index():
     return render_template('index.html')
 
+@app.route('/api/tickers', methods=['GET'])
+def get_tickers():
+    query = request.args.get('q', '').upper()
+    if not query:
+        return jsonify([])
+
+    try:
+        tickers = yf.Ticker(query)
+        # Beispiel: Rückgabe von Name und Symbol
+        return jsonify([
+            {"symbol": query, "name": tickers.info.get("shortName", "Unbekannt")}
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/update_table', methods=['POST'])
 def update_table():
     symbols = request.json.get('symbols', [])

@@ -100,59 +100,9 @@ body {
     margin-bottom: 10px;
 }
 
-/* Input Group Styles */
-.input-group {
-    display: flex;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 400px;
-}
 
-.input-group input {
-    flex: 1;
-    padding: 10px;
-    font-size: 1rem;
-    border: 1px solid #bdc3c7;
-    border-radius: 4px 0 0 4px;
-    outline: none;
-    transition: border-color 0.3s ease;
-}
 
-.input-group input:focus {
-    border-color: #3498db; /* Blau beim Fokus */
-}
 
-.input-group button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    border: 1px solid #bdc3c7;
-    border-radius: 0 4px 4px 0;
-    background-color: #3498db;
-    color: #fff;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.input-group button:hover {
-    background-color: #2980b9; /* Dunkleres Blau beim Hover */
-}
-
-/* Button Styles */
-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 4px;
-    background-color: #3498db;
-    color: #fff;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
 
 /* Error Message Styles */
 .error-message {
@@ -192,23 +142,148 @@ p {
     color: #2c3e50;
 }
 
+/* Button Styles */
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button:disabled {
+    position: relative; /* Für den Tooltip */
+    background-color: #bdc3c7; /* Grauer Hintergrund */
+    color: #7f8c8d; /* Graue Schrift */
+    cursor: not-allowed; /* Zeigt an, dass der Button nicht klickbar ist */
+    opacity: 0.6; /* Leicht transparent */
+}
+
+button:disabled::after {
+    content: "Änderungen am Dashboard erforderlich"; /* Tooltip-Text */
+    position: absolute;
+    top: 110%; /* Unterhalb des Buttons */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333; /* Dunkler Hintergrund für den Tooltip */
+    color: #fff; /* Weiße Schrift */
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0; /* Unsichtbar, bis Hover */
+    pointer-events: none; /* Tooltip ist nicht interaktiv */
+    transition: opacity 0.3s ease;
+    z-index: 10;
+}
+
+button:disabled:hover::after {
+    opacity: 1; /* Tooltip sichtbar machen */
+} 
+
+
+/* Autovervollständigung */
+.ticker-autocomplete {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung von Eingabefeld und Button */
+    width: 100%;
+    border: 1px solid #bdc3c7; /* Gemeinsame Umrandung */
+    border-radius: 4px; /* Abgerundete Ecken für das gesamte Eingabefeld */
+    overflow: hidden; /* Verhindert, dass der Button oder das Eingabefeld über die Grenzen hinausragen */
+    height: 40px; /* Einheitliche Höhe für den Container */
+}
+
+#ticker-input {
+    flex: 1; /* Eingabefeld nimmt den verfügbaren Platz ein */
+    padding: 10px;
+    font-size: 1rem;
+    border: none; /* Entfernt die Standardumrandung */
+    outline: none; /* Entfernt den Fokusrahmen */
+    height: 100%; /* Gleiche Höhe wie der Container */
+}
+
+#add-ticker-button {
+    padding: 0 15px; /* Innenabstand für den Button */
+    font-size: 1rem;
+    border: none; /* Entfernt die Standardumrandung */
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    height: calc(100% - 4px); /* Button leicht kleiner machen */
+    margin-top: 2px; /* Button leicht nach oben verschieben */
+    border-left: 1px solid #bdc3c7; /* Trennlinie zwischen Eingabefeld und Button */
+    border-radius: 4px; /* Keine abgerundeten Ecken */
+}
+
+#add-ticker-button:hover {
+    background-color: #2980b9;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+    display: none; /* Standardmäßig ausgeblendet */
+}
+
+.suggestions-list li {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.suggestions-list li:hover {
+    background-color: #f4f4f9;
+}
+
 /* Ausgewählte Ticker */
 .ticker-list {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    overflow-y: auto;
+    overflow: visible; /* Kein Scrollbar */
 }
 
 .ticker-list li {
     display: flex;
-    justify-content: space-between;
-    padding: 5px 10px;
+    align-items: center; /* Vertikale Zentrierung */
+    justify-content: space-between; /* Platz zwischen Name und Buttons */
+    padding: 2px 5px; /* Minimaler Innenabstand */
     background-color: #ffffff;
     border: 1px solid #bdc3c7;
     border-radius: 4px;
-    margin-bottom: 5px;
+    margin-bottom: 5px; /* Abstand zwischen den Einträgen */
     transition: background-color 0.3s ease;
+    font-size: 0.9rem; /* Schriftgröße */
+    line-height: 1; /* Zeilenhöhe auf Schriftgröße reduziert */
+    height: 1.8rem; /* Feste Höhe für konsistente Darstellung */
 }
 
 .ticker-list li:hover {

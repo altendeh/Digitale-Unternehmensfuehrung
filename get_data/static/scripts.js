@@ -5,6 +5,7 @@ async function addTicker() {
     const input = document.getElementById('ticker-input');
     const ticker = input.value.trim().toUpperCase();
     const errorMessage = document.getElementById('error-message');
+    const suggestionsList = document.getElementById('ticker-suggestions'); // Vorschlagsliste
     errorMessage.textContent = '';
 
     // Überprüfen, ob die maximale Anzahl von Tickern erreicht wurde
@@ -19,6 +20,14 @@ async function addTicker() {
             tickers.push(ticker);
             updateTickerList();
             input.value = '';
+
+            // Vorschlagsliste leeren und ausblenden
+            suggestionsList.innerHTML = '';
+            suggestionsList.style.display = 'none';
+
+            // Aktiviere den "Dashboard erstellen"-Button
+            const createButton = document.getElementById('create-dashboard-button');
+            createButton.disabled = false;
         } else {
             errorMessage.textContent = 'Ungültiges Tickersymbol. Bitte versuchen Sie es erneut.';
         }
@@ -40,19 +49,32 @@ async function checkTickerValidity(ticker) {
     return data.is_valid;
 }
 
-// Funktion zum Entfernen eines Tickers
 function removeTicker(ticker) {
-    tickers = tickers.filter(t => t !== ticker);
-    updateTickerList();
+    const index = tickers.indexOf(ticker);
+    if (index !== -1) {
+        tickers.splice(index, 1); // Entferne den Ticker aus der Liste
+        updateTickerList(); // Aktualisiere die Anzeige der Ticker-Liste
+
+        // Deaktiviere den "Dashboard erstellen"-Button, wenn keine Ticker mehr vorhanden sind
+        const createButton = document.getElementById("create-dashboard-button");
+        createButton.disabled = tickers.length === 0;
+    }
 }
 
 // Funktion zum Aktualisieren der Ticker-Liste
 function updateTickerList() {
     const list = document.getElementById('ticker-list');
-    list.innerHTML = '';
+    list.innerHTML = ''; // Leere die Liste
+
     tickers.forEach(ticker => {
         const li = document.createElement('li');
-        li.innerHTML = `${ticker} <button onclick="removeTicker('${ticker}')">Löschen</button>`;
+        li.textContent = ticker;
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'Löschen';
+        removeButton.onclick = () => removeTicker(ticker);
+
+        li.appendChild(removeButton);
         list.appendChild(li);
     });
 }
@@ -82,6 +104,11 @@ async function createDashboard() {
     Plotly.newPlot('table-container', figData.data, figData.layout, { responsive: true });
     document.getElementById('table-title').classList.remove('hidden');
     document.getElementById('table-description').classList.remove('hidden');
+    alert("Dashboard wurde erstellt!");
+
+    // Deaktiviere den Button nach dem Erstellen
+    const createButton = document.getElementById("create-dashboard-button");
+    createButton.disabled = true;
 
     // Strukturbilanz-Tabelle erstellen
     const structuralBalanceSheetResponse = await fetch('/update_structural_balance_sheet', {
@@ -190,6 +217,12 @@ function loadDashboardByIndex(index) {
     updateTickerList(); // Aktualisiere die Anzeige der Ticker-Liste
     createDashboard(); // Erstelle das Dashboard basierend auf den geladenen Tickern
     alert(`Dashboard "${selectedDashboard.name}" wurde erfolgreich geladen.`);
+
+    // Deaktiviere den "Dashboard erstellen"-Button
+    const createButton = document.getElementById("create-dashboard-button");
+    if (createButton) {
+        createButton.disabled = true; // Button deaktivieren
+    }
 }
 
 function deleteDashboard(index) {
@@ -224,31 +257,53 @@ function displaySavedDashboards() {
 }
 
 async function suggestTickers() {
-    const input = document.getElementById("ticker-input").value.toUpperCase();
+    const input = document.getElementById("ticker-input").value.trim().toUpperCase();
     const suggestionsList = document.getElementById("ticker-suggestions");
 
-    // Leere die Vorschläge, wenn das Eingabefeld leer ist
     if (!input) {
         suggestionsList.innerHTML = "";
+        suggestionsList.style.display = "none";
         return;
     }
 
     try {
-        // Beispiel-API-Aufruf (ersetze durch eine echte API)
-        const response = await fetch(`https://query2.finance.yahoo.com/v1/finance/search?q=${input}`);
+        const response = await fetch(`/api/tickers?q=${input}`);
         const data = await response.json();
 
-        // Leere die Vorschläge
         suggestionsList.innerHTML = "";
+        suggestionsList.style.display = "block";
 
-        // Füge die gefilterten Vorschläge hinzu
-        data.forEach(ticker => {
-            const li = document.createElement("li");
-            li.textContent = ticker.symbol; // Beispiel: ticker.symbol
-            li.onclick = () => selectTicker(ticker.symbol);
-            suggestionsList.appendChild(li);
-        });
+        if (data.error) {
+            suggestionsList.innerHTML = `<li>Fehler: ${data.error}</li>`;
+            return;
+        }
+
+        // Überprüfen, ob die Antwort ein Array ist
+        if (Array.isArray(data)) {
+            data.forEach(ticker => {
+                const li = document.createElement("li");
+                li.textContent = `${ticker.symbol} - ${ticker.name}`;
+                li.onclick = () => selectTicker(ticker.symbol);
+                suggestionsList.appendChild(li);
+            });
+        } else {
+            suggestionsList.innerHTML = `<li>Keine Vorschläge gefunden</li>`;
+        }
     } catch (error) {
         console.error("Fehler beim Abrufen der Tickersymbole:", error);
+        suggestionsList.innerHTML = `<li>Fehler beim Abrufen der Daten</li>`;
+        suggestionsList.style.display = "block";
     }
+}
+
+function selectTicker(ticker) {
+    // Setze den ausgewählten Ticker in das Eingabefeld
+    document.getElementById("ticker-input").value = ticker;
+
+    // Leere die Vorschläge
+    const suggestionsList = document.getElementById("ticker-suggestions");
+    suggestionsList.innerHTML = "";
+
+    // Blende die Vorschlagsliste aus (optional, falls sie sichtbar bleibt)
+    suggestionsList.style.display = "none";
 }

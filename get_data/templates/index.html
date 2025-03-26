@@ -38,12 +38,7 @@
                 </ol>
             </div>
 
-            <!-- Eingabefeld für Ticker -->
-            <div class="input-group">
-                <input type="text" id="ticker-input" placeholder="Ticker eingeben" aria-label="Ticker eingeben">
-                <button onclick="addTicker()">Hinzufügen</button>
-            </div>
-            <button onclick="createDashboard()" style="width: 300px;">Dashboard erstellen</button>
+            
     
             <div id="error-message" class="error-message" aria-live="polite"></div>
 
@@ -83,16 +78,41 @@
         <!-- Rechte Spalte -->
         <div class="right-column">
             <h2>Ausgewählte Ticker</h2>
+        
+            <!-- Autovervollständigung für Tickersymbole -->
+            <div class="ticker-autocomplete">
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        id="ticker-input" 
+                        placeholder="Ticker eingeben..." 
+                        oninput="suggestTickers()" 
+                    />
+                    <button id="add-ticker-button" onclick="addTicker()">+</button>
+                </div>
+                <ul id="ticker-suggestions" class="suggestions-list"></ul>
+            </div>
+        
+            <!-- Liste der ausgewählten Ticker -->
             <ul id="ticker-list" class="ticker-list"></ul>
         
+            <!-- Button zum Dashboard erstellen -->
+            <div class="dashboard-actions">
+                <button id="create-dashboard-button" onclick="createDashboard()">Dashboard erstellen</button>
+            </div>
+
+            <!-- Button zum Speichern des Dashboards -->
+            <div class="dashboard-actions">
+                <button onclick="saveDashboard()">Dashboard speichern</button>
+            </div>
+
+            <!-- Gespeicherte Dashboards -->
             <div class="saved-dashboards">
                 <h2>Gespeicherte Dashboards</h2>
                 <ul id="saved-dashboards-list" class="ticker-list"></ul>
             </div>
         
-            <div class="dashboard-actions">
-                <button onclick="saveDashboard()">Dashboard speichern</button>
-            </div>
+            
         </div>
     </div>
 
