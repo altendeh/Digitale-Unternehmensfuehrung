@@ -304,6 +304,6 @@ function selectTicker(ticker) {
     const suggestionsList = document.getElementById("ticker-suggestions");
     suggestionsList.innerHTML = "";
 
-    // Blende die Vorschlagsliste aus (optional, falls sie sichtbar bleibt)
+    // Blende die Vorschlagsliste aus 
     suggestionsList.style.display = "none";
 }
