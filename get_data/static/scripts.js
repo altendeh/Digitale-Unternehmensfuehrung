@@ -156,3 +156,99 @@ async function createDashboard() {
     document.getElementById('liquidity-ratios-title').classList.remove('hidden');
     document.getElementById('liquidity-ratios-description').classList.remove('hidden');
 }
+
+function saveDashboard() {
+    const dashboardName = prompt("Bitte geben Sie einen Namen für das Dashboard ein:");
+    if (!dashboardName) {
+        alert("Das Dashboard wurde nicht gespeichert, da kein Name angegeben wurde.");
+        return;
+    }
+
+    const dashboardData = {
+        name: dashboardName,
+        tickers: tickers, // Aktuelle Ticker-Liste
+        timestamp: new Date().toISOString() // Zeitstempel
+    };
+
+    // Lade bestehende Dashboards aus LocalStorage
+    const savedDashboards = JSON.parse(localStorage.getItem("dashboards")) || [];
+    savedDashboards.push(dashboardData);
+
+    // Speichere die aktualisierte Liste der Dashboards in LocalStorage
+    localStorage.setItem("dashboards", JSON.stringify(savedDashboards));
+
+    // Aktualisiere die Anzeige der gespeicherten Dashboards
+    displaySavedDashboards();
+
+    alert(`Dashboard "${dashboardName}" wurde erfolgreich gespeichert.`);
+}
+
+function loadDashboardByIndex(index) {
+    const savedDashboards = JSON.parse(localStorage.getItem("dashboards")) || [];
+    const selectedDashboard = savedDashboards[index];
+    tickers = selectedDashboard.tickers; // Lade die Ticker-Liste
+    updateTickerList(); // Aktualisiere die Anzeige der Ticker-Liste
+    createDashboard(); // Erstelle das Dashboard basierend auf den geladenen Tickern
+    alert(`Dashboard "${selectedDashboard.name}" wurde erfolgreich geladen.`);
+}
+
+function deleteDashboard(index) {
+    const savedDashboards = JSON.parse(localStorage.getItem("dashboards")) || [];
+    const deletedDashboard = savedDashboards.splice(index, 1);
+    localStorage.setItem("dashboards", JSON.stringify(savedDashboards));
+    alert(`Dashboard "${deletedDashboard[0].name}" wurde erfolgreich gelöscht.`);
+    displaySavedDashboards(); // Aktualisiere die Liste der gespeicherten Dashboards
+}
+
+// Event-Listener, um gespeicherte Dashboards nach dem Laden der Seite anzuzeigen
+document.addEventListener("DOMContentLoaded", () => {
+    displaySavedDashboards();
+});
+
+function displaySavedDashboards() {
+    const savedDashboards = JSON.parse(localStorage.getItem("dashboards")) || [];
+    const dashboardList = document.getElementById("saved-dashboards-list");
+    dashboardList.innerHTML = ""; // Liste zurücksetzen
+
+    savedDashboards.forEach((dashboard, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+            <span>${dashboard.name}</span>
+            <div>
+                <button onclick="loadDashboardByIndex(${index})">Laden</button>
+                <button onclick="deleteDashboard(${index})" style="color: red;">Löschen</button>
+            </div>
+        `;
+        dashboardList.appendChild(li);
+    });
+}
+
+async function suggestTickers() {
+    const input = document.getElementById("ticker-input").value.toUpperCase();
+    const suggestionsList = document.getElementById("ticker-suggestions");
+
+    // Leere die Vorschläge, wenn das Eingabefeld leer ist
+    if (!input) {
+        suggestionsList.innerHTML = "";
+        return;
+    }
+
+    try {
+        // Beispiel-API-Aufruf (ersetze durch eine echte API)
+        const response = await fetch(`https://query2.finance.yahoo.com/v1/finance/search?q=${input}`);
+        const data = await response.json();
+
+        // Leere die Vorschläge
+        suggestionsList.innerHTML = "";
+
+        // Füge die gefilterten Vorschläge hinzu
+        data.forEach(ticker => {
+            const li = document.createElement("li");
+            li.textContent = ticker.symbol; // Beispiel: ticker.symbol
+            li.onclick = () => selectTicker(ticker.symbol);
+            suggestionsList.appendChild(li);
+        });
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Tickersymbole:", error);
+    }
+}

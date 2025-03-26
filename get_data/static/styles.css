@@ -174,11 +174,11 @@ p {
     color: #555;
 }
 
-/* Right Column Styles */
+/* Rechte Spalte */
 .right-column {
-    width: 300px;
+    width: 300px; /* Feste Breite */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Elemente vertikal anordnen */
     padding: 20px;
     box-sizing: border-box;
     overflow-y: auto;
@@ -188,10 +188,11 @@ p {
 
 .right-column h2 {
     font-size: 1.5rem;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     color: #2c3e50;
 }
 
+/* Ausgewählte Ticker */
 .ticker-list {
     list-style-type: none;
     padding: 0;
@@ -202,27 +203,156 @@ p {
 .ticker-list li {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    padding: 5px 10px;
     background-color: #ffffff;
     border: 1px solid #bdc3c7;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     transition: background-color 0.3s ease;
 }
 
 .ticker-list li:hover {
-    background-color: #f4f4f9; /* Leichtes Grau beim Hover */
+    background-color: #f9f9f9; /* Leichtes Grau beim Hover */
 }
 
 .ticker-list button {
     background: none;
     border: none;
-    color: #e74c3c; /* Rot für Löschen */
+    color: red; /* Rote Farbe für den Löschen-Button */
     cursor: pointer;
     font-size: 0.9rem;
     transition: color 0.3s ease;
 }
 
 .ticker-list button:hover {
-    color: #c0392b; /* Dunkleres Rot beim Hover */
+    color: darkred; /* Dunkleres Rot beim Hover */
+}
+
+/* Gespeicherte Dashboards */
+.saved-dashboards {
+    margin-top: 40px; /* Abstand zur Ticker-Liste */
+}
+
+.saved-dashboards h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.saved-dashboards .ticker-list li {
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung */
+    justify-content: space-between; /* Platz zwischen Name und Buttons */
+    padding: 5px 10px;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.saved-dashboards .ticker-list li:hover {
+    background-color: #f4f4f9; /* Leichtes Grau beim Hover */
+}
+
+.saved-dashboards .ticker-list span {
+    flex: 1; /* Name des Dashboards nimmt den verfügbaren Platz ein */
+    display: flex;
+    align-items: center; /* Vertikale Zentrierung des Textes */
+}
+
+.saved-dashboards .ticker-list .button-group {
+    display: flex; /* Buttons nebeneinander anordnen */
+    align-items: center; /* Vertikale Zentrierung der Buttons */
+    gap: 10px; /* Abstand zwischen den Buttons */
+}
+
+.saved-dashboards .ticker-list button {
+    background: none;
+    border: none;
+    color: #3498db; /* Blau für Aktionen */
+    cursor: pointer;
+    font-size: 0.8rem; /* Kleinere Schriftgröße für Buttons */
+    transition: color 0.3s ease;
+    padding: 5px 10px; /* Konsistenter Innenabstand */
+    border-radius: 4px; /* Abgerundete Ecken */
+    padding: 5px 10px; /* Konsistenter Innenabstand */
+    border-radius: 4px; /* Abgerundete Ecken */
+}
+
+.saved-dashboards .ticker-list button:hover {
+    color: #2980b9; /* Dunkleres Blau beim Hover */
+}
+
+.saved-dashboards .ticker-list button[style="color: red;"] {
+    color: red; /* Rote Farbe für den Löschen-Button */
+}
+
+.saved-dashboards .ticker-list button[style="color: red;"]:hover {
+    color: darkred; /* Dunkleres Rot beim Hover */
+}
+
+/* Dashboard-Aktionen */
+.dashboard-actions {
+    margin-top: 20px;
+}
+
+.dashboard-actions button {
+    margin-right: 10px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-actions button:hover {
+    background-color: #2980b9;
+}
+
+
+.ticker-autocomplete {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+#ticker-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    outline: none;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+}
+
+.suggestions-list li {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.suggestions-list li:hover {
+    background-color: #f4f4f9;
 }
