@@ -129,13 +129,13 @@ def calculate_kpis(df):
     df.loc['Debt_Ratio'] = (df.loc['Total Liabilities Net Minority Interest'] / (df.loc['Stockholders Equity'] + df.loc['Total Liabilities Net Minority Interest'])) * 100
     df.loc['Static_Debt_Ratio'] = (df.loc['Total Liabilities Net Minority Interest'] / df.loc['Stockholders Equity']) * 100
     df.loc['Fixed_Asset_Intensity'] = df.loc['Total Non Current Assets'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
-    df.loc['Coverage_Ratio_1'] = df.loc['Stockholders Equity'] / df.loc['Total Non Current Assets']
-    df.loc['Coverage_Ratio_2'] = (df.loc['Stockholders Equity'] + df.loc['Total Non Current Liabilities Net Minority Interest']) / df.loc['Total Non Current Assets']
+    df.loc['Coverage_Ratio_1'] = (df.loc['Stockholders Equity'] / df.loc['Total Non Current Assets']) * 100
+    df.loc['Coverage_Ratio_2'] = ((df.loc['Stockholders Equity'] + df.loc['Total Non Current Liabilities Net Minority Interest']) / df.loc['Total Non Current Assets']) * 100
     df.loc['Current_Asset_Ratio'] = df.loc['Current Assets'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
     df.loc['Receivables_Ratio'] = df.loc['Receivables'] / (df.loc['Current Assets'] + df.loc['Total Non Current Assets'])
-    df.loc['1. Liquidity_Ratio'] = df.loc['Current Assets'] / df.loc['Current Liabilities']
-    df.loc['2. Liquidity_Ratio'] = (df.loc['Current Assets'] - df.loc['Inventory']) / df.loc['Current Liabilities']
-    df.loc['3. Liquidity_Ratio'] = df.loc['Cash Cash Equivalents And Short Term Investments'] / df.loc['Current Liabilities']
+    df.loc['1. Liquidity_Ratio'] = (df.loc['Current Assets'] / df.loc['Current Liabilities']) * 100
+    df.loc['2. Liquidity_Ratio'] = ((df.loc['Current Assets'] - df.loc['Inventory']) / df.loc['Current Liabilities']) * 100
+    df.loc['3. Liquidity_Ratio'] = (df.loc['Cash Cash Equivalents And Short Term Investments'] / df.loc['Current Liabilities']) * 100
     df.loc['Net_Working_Capital'] = df.loc['Current Assets'] - df.loc['Current Liabilities']
     return df
 
@@ -510,7 +510,7 @@ def create_line_chart(ticker_symbols):
     fig.update_layout(
         title='Eigenkapitalquote, Fremdkapitalquote und Statischer Verschuldungsgrad',
         xaxis_title='Jahr',
-        yaxis_title='Quote',
+        yaxis_title='Quote (%)',
         legend_title='Unternehmen',
         updatemenus=[
             {
@@ -582,7 +582,7 @@ def create_coverage_ratios_chart(ticker_symbols):
     fig.update_layout(
         title='1. und 2. Anlagendeckung im Zeitverlauf',
         xaxis_title='Jahr',
-        yaxis_title='Anlagendeckungsgrad',
+        yaxis_title='Anlagendeckungsgrad (%)',
         legend_title='Unternehmen'
     )
 
@@ -641,7 +641,7 @@ def create_liquidity_ratios_chart(ticker_symbols):
     fig.update_layout(
         title='1., 2. und 3. Liquiditätsgrade im Zeitverlauf',
         xaxis_title='Jahr',
-        yaxis_title='Liquiditätsgrad',
+        yaxis_title='Liquiditätsgrad (%)',
         legend_title='Unternehmen'
     )
 
